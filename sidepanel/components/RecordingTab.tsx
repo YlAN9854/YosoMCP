@@ -146,7 +146,7 @@ export default function RecordingTab() {
       }
 
       const autoLoop = autoLoopTargetMap.get(node.id)
-      const shouldAutoSetLoopTargetRole = !!autoLoop && node.metadata.nodeRoleSource !== 'user'
+      const shouldAutoSetLoopTargetRole = !!autoLoop
 
       return {
         ...node,
