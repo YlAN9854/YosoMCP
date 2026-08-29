@@ -2,16 +2,16 @@
 
 ## 选择连接方式
 
-所有命令使用独立 session：
+所有命令使用独立 session，并必须由后文的 transcript-safe wrapper 执行；以下连接示例只表示参数，不允许把 CLI 原始 stdout/stderr 直接返回 Agent：
 
 ```bash
-playwright-cli -s=yoso ...
+run_private <label> ...
 ```
 
 ### 用户提供 CDP endpoint
 
 ```bash
-playwright-cli -s=yoso attach --cdp=http://127.0.0.1:9222
+run_private attach-cdp attach --cdp=http://127.0.0.1:9222
 ```
 
 endpoint 必须来自用户或当前受控 QA 环境。不得扫描本机端口寻找浏览器。
@@ -27,7 +27,7 @@ chrome://inspect/#remote-debugging
 随后：
 
 ```bash
-playwright-cli -s=yoso attach --cdp=chrome
+run_private attach-channel attach --cdp=chrome
 ```
 
 不得绕过授权对话框。Chrome 136+ 的传统 remote-debugging port 对默认 data directory 不生效；不要把新建 profile 冒充用户当前 session。
@@ -37,7 +37,7 @@ playwright-cli -s=yoso attach --cdp=chrome
 安装并批准官方 Playwright Extension 后：
 
 ```bash
-playwright-cli -s=yoso attach --extension=chrome
+run_private attach-extension attach --extension=chrome
 ```
 
 只控制用户授权给 Extension 的 tab group。
@@ -67,15 +67,34 @@ attach 前必须：
 3. 注册 finally 清理：先 detach，再删除这个精确运行目录。成功、失败和用户取消都执行。
 4. 禁止把 secret 写入 shell history、命令字面量或环境检查输出；只验证变量存在、非 placeholder，不输出值。
 
-只把 snapshot 原文留在本轮易失目录和进程内。需要让 Agent 读取 snapshot 时，先对 supplied inputs 做精确替换，再输出脱敏后的 locator/页面片段；含 secret 的原始 snapshot 不得进入 tool transcript、日志或 evidence。表单注入 secret 后，所有后续 snapshot 都适用此规则。
+同一受控 shell invocation 中定义并强制使用 transcript-safe wrapper。等价模式如下；不得把 `playwright-cli` 裸调用作为单独 tool call：
+
+```bash
+run_private() {
+  label="$1"
+  shift
+  (cd "$YOSO_RUNTIME_DIR" && playwright-cli -s=yoso "$@") \
+    >"$YOSO_RUNTIME_DIR/$label.stdout" \
+    2>"$YOSO_RUNTIME_DIR/$label.stderr"
+}
+```
+
+attach、tab-list、snapshot、find、eval、fill 和其他 action 全部通过该 wrapper。随后仍在同一 shell 进程内解析这些文件：
+
+- 对每个 supplied input 做精确值替换后，才允许输出必要的 locator 片段。
+- 更优先只输出白名单状态，例如 target count、唯一 element ref、URL origin、布尔验证、step/error code。
+- 不输出 snapshot 全文、字段值、原始 stdout/stderr 或自动 post-action snapshot。
+- secret 参数只以受控变量引用传给 wrapper，例如 `run_private fill-password fill "$target_ref" "$YOSO_INPUT_PASSWORD"`；不得把展开后的值写进命令字面量。
+
+只把 snapshot 原文留在本轮易失目录和进程内。若执行环境不能在 Agent 看见输出前完成重定向与脱敏，必须在 attach 前停止。表单注入 secret 后，所有后续命令和 snapshot 都适用此规则。
 
 ## 执行循环
 
 从私有易失目录 attach 后：
 
 ```bash
-playwright-cli -s=yoso tab-list
-playwright-cli -s=yoso snapshot
+run_private tab-list tab-list
+run_private page-snapshot --raw snapshot
 ```
 
 对每个 step：
@@ -96,7 +115,7 @@ CDP 连接的能力低于完整 Playwright protocol。某个高级能力不可�
 try:
   snapshot + execute + verify
 finally:
-  playwright-cli -s=yoso detach
+  run_private detach detach
   清除本轮易失运行目录
 ```
 
@@ -108,4 +127,5 @@ finally:
 - 不访问 `chrome://`、`edge://`、DevTools 页面；Remote Debugging 授权页仅由用户操作。
 - 不把 snapshot 全文写入 evidence；只记录必要的 element ref、URL origin 和结果状态。
 - secret input 不进入 CLI transcript。优先通过受控的进程输入或 Agent 内存传递；如果当前工具无法避免回显或无法把自动 snapshot 限制在 memory-backed 目录，先停止并请求安全输入通道。
+- 不把直接 `playwright-cli` tool call 当作 wrapper；重定向必须发生在同一 shell 命令内部、早于工具采集 stdout/stderr。
 - finally 后检查 Skill/仓库/evidence cwd 未新增 `.playwright-cli`，且易失运行目录不存在；该检查只看路径和文件数量，不读取 secret 值。

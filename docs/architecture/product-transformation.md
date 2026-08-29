@@ -182,7 +182,7 @@ Skill 的 metadata/description 负责稳定触发：当用户显式或隐式要�
 
 三者的共同原则是连接用户明确批准的外部浏览器，而不是由 Skill 新开隔离实例。连接同一个 profile/context 才能使用其 cookies、origin storage 和现有页面；`storageState` 导入到新 context 不等于复用真实浏览器。更完整的能力边界见[本地 Chrome session 复用调研](../research/playwright-local-chrome-session-reuse.md)。
 
-`playwright-cli` 的 snapshot 可能包含已经填写的表单值，并自动写入当前工作目录。Browser Skill 必须从本轮独立的私有易失目录运行，把 daemon/cache 一并限制在该目录；有 secret input 时该目录必须是 memory-backed filesystem。snapshot 原文只在进程内解析，对外输出前替换 supplied inputs；finally 先 detach，再清除整个易失目录。无法满足这些条件时在 attach 前停止，不能把仓库、Skill 或 evidence 目录当作运行目录。
+`playwright-cli` 的 snapshot 可能包含已经填写的表单值，并自动写入当前工作目录或作为 action stdout 返回。Browser Skill 必须从本轮独立的私有易失目录运行，把 daemon/cache 一并限制在该目录；有 secret input 时该目录必须是 memory-backed filesystem。所有 CLI 命令经同一 shell invocation 内的受控 wrapper 先重定向 stdout/stderr，再在进程内解析，只有替换 supplied inputs 后的最小 locator/状态可以进入 Agent transcript。finally 先 detach，再清除整个易失目录。无法在工具采集输出前完成重定向与脱敏时必须在 attach 前停止，不能把仓库、Skill 或 evidence 目录当作运行目录。
 
 ## 9. 错误模型
 

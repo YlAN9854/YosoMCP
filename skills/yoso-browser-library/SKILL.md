@@ -16,7 +16,7 @@ description: "当用户明确或隐含要求在真实浏览器执行网站操作
    - secret input 只保存在当前调用内存，不回显、不写日志、不写 evidence。
    - 不允许把 placeholder 或 `[REDACTED]` 当成输入值。
 4. 按 [真实浏览器连接](references/browser-connection.md) 建立私有易失运行目录，再选择用户明确批准的连接方式。`playwright-cli` 会自动落盘 snapshot；有 secret input 时若无法使用 memory-backed 目录，必须在 attach 前停止。禁止静默 fallback 到 `open`、persistent profile 或新 BrowserContext。
-5. 从易失目录 attach，立即获取 snapshot，确认目标 tab、origin 和可见页面状态。snapshot 只在本轮进程内解析；任何输出先替换全部 supplied inputs，禁止把原文写入 transcript 或 evidence。
+5. 从易失目录通过 transcript-safe wrapper attach，立即获取 snapshot，确认目标 tab、origin 和可见页面状态。禁止直接调用会把 stdout/stderr 返回 Agent 的 `playwright-cli`；wrapper 必须先把原始输出重定向到易失目录，只将脱敏后的最小 locator/状态返回 transcript。
 6. 按 workflow `steps` 顺序串行执行。每步先从 snapshot 解析当前 locator，再执行一个动作，再验证 URL、可见性或目标状态。页面注入 secret 后，后续 snapshot 同样只能在易失目录内生成并经脱敏后输出。
 7. extract 只返回运行时页面结果，不返回录制时 snapshot。
 8. 成功或失败都在 finally 阶段执行 `playwright-cli -s=yoso detach`，再清除本轮易失目录及 daemon/cache。只断开 CLI，不关闭用户浏览器。
@@ -49,7 +49,7 @@ description: "当用户明确或隐含要求在真实浏览器执行网站操作
 
 - `navigate`：仅在需要时使用 cleaned URL；导航后 snapshot 并核对 origin/页面标识。
 - `click` / `dblclick` / `hover` / `check` / `select`：使用本轮 snapshot 得到的唯一 target。
-- `fill`：从 `requiredInputs[field=value]` 取值；secret 不得进入命令回显、snapshot 输出、自动生成的持久文件或报告。执行后只返回布尔/状态验证，不返回字段值。
+- `fill`：从 `requiredInputs[field=value]` 取值；命令本身及其自动 post-action snapshot 都必须经 transcript-safe wrapper。secret 不得进入命令回显、snapshot 输出、自动生成的持久文件或报告。执行后只返回布尔/状态验证，不返回字段值。
 - `upload`：从 `requiredInputs[field=filePath]` 取本机路径；不存在时停止。
 - `keydown`：使用 workflow key。
 - `scroll`：使用记录方向/位置作为提示，再 snapshot。
