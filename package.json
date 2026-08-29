@@ -1,6 +1,6 @@
 {
   "name": "yoso-extension",
-  "description": "YOSO browser extension: record actions and generate MCP server code",
+  "description": "YOSO browser workflow recorder and versioned Trace Package exporter",
   "private": false,
   "version": "0.0.0",
   "type": "module",

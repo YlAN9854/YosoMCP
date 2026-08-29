@@ -1,22 +1,56 @@
 # YOSO
 
-**YOSO** 是一款 Chrome 浏览器扩展：在真实网页上演示交互操作，扩展会将演示录制为**结构化的操作树**，并导出为可被 AI Agent 调用的 **MCP Server** 或 **Skill** 代码。
+**YOSO** 是一套以 Chrome 扩展为入口的 browser workflow 系统。用户在真实网页上演示操作，扩展将轨迹录制、规范化并默认脱敏，导出为 versioned **YOSO Trace Package（`.yoso`）**；Agent 再通过仓库内的两个 Skill 将轨迹编译为 workflow library，并在用户已经打开的 Chrome session 中动态理解页面、执行操作。
 
-设计目标是把「人在浏览器里怎么做」系统地变成「机器可调用、带参数与返回值的工具」，同时尽量把**登录态与站点上下文**封装在导出产物中，减少 Agent 对认证细节的感知负担。
+新的主路径不再把 CSS selector 固化脚本当作唯一真相。轨迹描述保留操作意图、顺序和必要的页面线索，执行时由 Agent 重新观察当前页面并选择目标元素，从而更好地适应页面结构变化。完整设计见[产品转型架构](docs/architecture/product-transformation.md)。
 
 ---
 
-## 功能概览
+## 产品组成
+
+| 组件 | 职责 | 是否调用 LLM |
+|------|------|:---:|
+| **YOSO Recorder 扩展** | 录制操作树、做结构标注、按固定 allowlist 脱敏并导出 `.yoso`。 | 否 |
+| [`yoso-trace-compiler`](skills/yoso-trace-compiler/SKILL.md) | 把不可信 `.yoso` 校验、编译并原子导入本地 workflow library；不操作浏览器。 | 否 |
+| [`yoso-browser-library`](skills/yoso-browser-library/SKILL.md) | 查找已导入 workflow，收集运行时输入，连接已有 Chrome，观察页面后逐步执行并 detach。 | 否 |
+
+三部分的数据流是：
+
+```text
+用户演示 → Recorder → <workflow>.yoso
+                         ↓
+               yoso-trace-compiler
+                         ↓
+              本地 workflow library
+                         ↓
+               yoso-browser-library
+                         ↓
+                 已有 Chrome session
+```
+
+## 核心能力
 
 | 能力 | 说明 |
 |------|------|
-| **工具集（Toolset）** | 按站点/场景组织录制；一棵操作树对应一套录制上下文，便于管理与导出。 |
-| **操作树（Action Tree）** | 在侧栏可视化树形结构；分支表示不同操作路径，叶子路径可对应一个独立「工具」。 |
-| **录制与标注** | 自动捕获点击、输入、导航等；支持等待、悬停、内容提取、文件上传等需人工触发的标注流程。 |
-| **分支与参数** | 对存在平行路径的节点可标记为分支点或枚举参数；支持循环目标（列表项）等结构。 |
-| **回溯重放** | 从树上指定位置重放已录步骤，将页面恢复到该状态，便于在边侧「+」处**续录**新分支。 |
-| **导出** | 生成 MCP Server（如 `mcp-server.ts`）或 Skill 包；可选导出会话（Cookie 等）以配合 Playwright 等运行时。 |
-| **工具命名（可选）** | 配置 LLM API 后，可为分支生成更自然的函数名、描述与参数名；未配置时使用内置回退命名。 |
+| **工具集（ToolSet）** | 按站点或业务场景组织多棵操作树，一套工具集可以包含多条 workflow 轨迹。 |
+| **录制与结构标注** | 捕获点击、输入、导航、等待、悬停、内容提取、文件上传等操作，并保留树、分支、参数和循环语义。 |
+| **Trace Package** | 无需 branch `code-ready` 或 LLM；只要当前 ToolSet 有节点，即可在分支页下载 versioned `.yoso`。 |
+| **Agent 动态执行** | workflow 提供意图、顺序和页面线索；Agent 运行时 snapshot 页面并动态选择元素，不盲目依赖旧 selector。 |
+| **真实浏览器复用** | Browser Library Skill 只 attach 已有 Chrome，可复用该浏览器中的登录态、Cookie 与站点上下文；结束后只 detach。 |
+| **Legacy exports** | 原有 ToolSet JSON、固定脚本 Skill、MCP Server 和登录会话导出继续保留，便于已有用户迁移。 |
+
+## `.yoso` Trace Package
+
+`.yoso` 是 ZIP 容器，v1 归档只允许两个根级条目：
+
+```text
+manifest.json
+trace.json
+```
+
+Recorder 使用字段 allowlist 和 `safe-default` 策略。默认不导出输入值、凭据、文件路径、DOM attributes、截图、提取文本、Cookie、LocalStorage、SessionStorage 或 LLM 配置；URL 的 query 和 fragment 会被移除。`manifest.json` 记录 schema/version、节点统计和可重算的脱敏事件计数。
+
+> `.yoso` 仍然是敏感文件，不是匿名数据。selectors、页面结构、站点路径和操作意图可能暴露内部系统信息；请只在受信任环境中保存、传输和编译。
 
 ---
 
@@ -101,21 +135,63 @@ npm run compile
 
 ---
 
-## 使用流程（简要）
+## 主使用流程
 
-1. **选择或新建工具集**，在目标站点标签页开始录制。
-2. 按业务流程操作页面；需要等待、悬停、提取内容或上传文件时，使用侧栏对应功能完成标注。
-3. 在操作树上处理**分支候选**与**节点角色**（分支点、枚举参数、动态参数、循环目标等），直至分支面板中路径显示为可导出状态。
-4. 需要新分支时，在树边侧使用**续录/分支录制**：扩展会先**重放**到该边起点再开始录制。
-5. 在**分支**页校验、命名（可选 LLM），然后导出 **MCP** 或 **Skill**，并按生成说明接入你的 Agent 或 MCP 宿主。
+1. 在扩展中选择或新建 ToolSet，在目标站点开始录制并按业务流程完成演示。
+2. 按需标注等待、悬停、提取、上传、分支、参数或循环语义；Trace 导出不要求先完成旧脚本的 `code-ready` 门槛。
+3. 打开**分支**页，点击**下载 Trace Package (.yoso)**。扩展在本地完成固定规则脱敏，不访问网络，也不调用 LLM。
+4. 让 Agent 使用 `$yoso-trace-compiler` 校验并导入 `.yoso`，得到本地 workflow library。
+5. 让 Agent 使用 `$yoso-browser-library` 选择 workflow、补齐已脱敏的运行时输入，并 attach 用户已有的 Chrome session。
+6. Agent 每一步先观察页面、解析当前 locator，再执行操作；成功或失败后均只运行 `playwright-cli -s=yoso detach`，不关闭外部浏览器。
 
-更细的交互说明建议随版本在 Wiki 或文档站点补充；本 README 仅作仓库入口说明。
+两个 Skill 可用官方 validator 检查：
+
+```bash
+uv run --with pyyaml python \
+  "$HOME/.codex/skills/.system/skill-creator/scripts/quick_validate.py" \
+  skills/yoso-trace-compiler
+
+uv run --with pyyaml python \
+  "$HOME/.codex/skills/.system/skill-creator/scripts/quick_validate.py" \
+  skills/yoso-browser-library
+```
+
+## 连接已有 Chrome
+
+Browser Library Skill 只允许显式 attach，不会静默执行 `open` 或启动一个替代浏览器。根据本机条件选择一种连接方式：
+
+```bash
+# Chrome 144+：在 chrome://inspect/#remote-debugging 启用并批准当前实例
+playwright-cli -s=yoso attach --cdp=chrome
+
+# Chrome 已在启动时暴露 CDP endpoint
+playwright-cli -s=yoso attach --cdp=http://127.0.0.1:9222
+
+# 已安装并授权 Playwright Extension，需要复用现有 tabs 时
+playwright-cli -s=yoso attach --extension=chrome
+
+# workflow 结束后只断开控制
+playwright-cli -s=yoso detach
+```
+
+传统 CDP endpoint 必须由 Chrome 预先开放；它不能把任意未启用调试的实例事后变成 9222 服务。Chrome、Playwright CLI/MCP 和跨 WSL/Windows 网络的版本差异见[本地 Chrome session 复用调研](docs/research/playwright-local-chrome-session-reuse.md)及 Browser Skill 的[连接说明](skills/yoso-browser-library/references/browser-connection.md)。
+
+## Legacy exports 兼容
+
+产品转型不会删除已有导出入口：
+
+- ToolSet 仍可导入/导出 `<name>.yoso.json`。
+- `code-ready` 分支仍可生成固定 TypeScript Skill 包与 MCP Server 包。
+- 登录会话仍可显式导出 Playwright `storageState` JSON；该文件含 Cookie 与 LocalStorage，比 `.yoso` 更敏感。
+- 旧 Skill/MCP 的 readiness、注册、代码生成和 blocked 规则保持不变。
+
+新的 Trace Compiler/Browser Library 与旧 `skill.runtime.json`/固定脚本是不同契约，不应混用。迁移期可以并行使用两条路径。
 
 ---
 
 ## 权限说明
 
-扩展会申请包括但不限于：`sidePanel`、`tabs`、`scripting`、`storage`、`cookies`、`webNavigation`、`downloads` 以及广泛 **host_permissions**（用于在任意站点注入内容脚本并录制/重放）。开源审阅时请以 `wxt.config.ts` 中的 `manifest` 为准。
+扩展会申请包括但不限于：`sidePanel`、`tabs`、`scripting`、`storage`、`cookies`、`webNavigation`、`downloads` 以及广泛 **host_permissions**（用于在任意站点注入内容脚本并录制/重放）。`.yoso` 导出不会读取 Cookie 或 Web Storage；`cookies` 权限仍由 legacy 登录会话导出使用。开源审阅时请以 `wxt.config.ts` 中的 `manifest` 为准。
 
 ---
 
@@ -127,6 +203,8 @@ content/              # 内容脚本：录制、重放、选择器与分支候�
 background/           # 后台：消息路由、重放控制、结构分析、MCP/Skill 生成
 sidepanel/            # 侧栏 UI（React）
 types/                # 共享类型定义
+skills/               # Trace Compiler 与 Browser Library 两个 repo-native Skill
+docs/architecture/    # 产品架构、数据契约与安全边界
 ```
 
 ---
@@ -137,10 +215,10 @@ types/                # 共享类型定义
 > 本项目仅供学习交流使用，请勿用于任何非法或违反网站服务条款的目的。因滥用本项目导致的任何法律责任，由使用者自行承担。
 
 **导出被拦截（blocked）**  
-部分路径存在未确认的节点或校验未通过时，生成器会拒绝产出可执行包。请在侧栏按提示完成节点角色确认与分支就绪条件。
+Legacy Skill/MCP 在路径未确认或校验未通过时仍会拒绝生成。`.yoso` Trace Package 不依赖这些门槛；若 Trace 导出失败，请检查操作树是否为空、节点 ID/父子关系是否合法。
 
 **LLM 相关**  
-工具注册命名等功能需要你在**设置**中配置 API Key 与模型；不配置不影响基础录制与代码生成，仅影响命名与部分文档生成质量。
+工具注册命名等 legacy 功能需要你在**设置**中配置 API Key 与模型；Recorder 的 `.yoso` 导出、两个 repo-native Skill 及真实浏览器执行均不依赖插件内 LLM 配置。
 
 ---
 

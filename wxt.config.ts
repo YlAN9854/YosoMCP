@@ -9,8 +9,8 @@ export default defineConfig({
     sizes: [128, 96, 48, 32, 24, 16],
   },
   manifest: {
-    name: 'YOSO - Browser Automation Tool Generator',
-    description: 'Record browser actions and generate MCP Server code',
+    name: 'YOSO - Browser Workflow Recorder',
+    description: 'Record, normalize, redact, and export browser workflows as versioned YOSO Trace Packages',
     permissions: [
       'activeTab',
       'sidePanel',
