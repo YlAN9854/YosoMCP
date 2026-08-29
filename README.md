@@ -28,6 +28,52 @@
                  已有 Chrome session
 ```
 
+## 新用户安装与数据目录
+
+扩展与两个 Skill 是三项独立安装物：扩展负责录制和导出，Trace Compiler 负责导入，Browser Library 负责复用已有 Chrome 执行。只安装 Skill **不会**自动创建、下载或附带任何站点 workflow。
+
+### 安装两个 Skill
+
+将仓库中的两个完整目录复制到本地 Codex Skill 根目录。默认根目录为 `${CODEX_HOME:-$HOME/.codex}/skills/`：
+
+| 仓库目录 | 默认安装目标 |
+|----------|--------------|
+| `skills/yoso-trace-compiler/` | `${CODEX_HOME:-$HOME/.codex}/skills/yoso-trace-compiler/` |
+| `skills/yoso-browser-library/` | `${CODEX_HOME:-$HOME/.codex}/skills/yoso-browser-library/` |
+
+首次安装且目标目录尚不存在时，可在仓库根目录执行：
+
+```bash
+CODEX_SKILLS_DIR="${CODEX_HOME:-$HOME/.codex}/skills"
+mkdir -p "$CODEX_SKILLS_DIR"
+cp -R skills/yoso-trace-compiler "$CODEX_SKILLS_DIR/"
+cp -R skills/yoso-browser-library "$CODEX_SKILLS_DIR/"
+```
+
+升级时应替换对应的完整 Skill 目录，避免把新目录嵌套到旧目录中。安装后重新开始一个 Agent 会话，使 Skill metadata 能在新会话中参与匹配。
+
+### 轨迹与 Library 存在哪里
+
+这三类文件彼此分离：
+
+| 数据 | 默认位置 | 何时产生 |
+|------|----------|----------|
+| Skill 本体 | `${CODEX_HOME:-$HOME/.codex}/skills/yoso-*/` | 用户安装两个 Skill 时 |
+| 原始 `.yoso` | 用户在浏览器中选择的下载目录 | Recorder 导出时 |
+| 编译后的 workflow library | `${YOSO_HOME:-$HOME/.yoso}/browser-library/v1/<traceId>/` | Trace Compiler 首次成功导入时 |
+
+因此，新用户刚安装两个 Skill 后，workflow library 为空是正常状态。用户需要先从插件下载 `.yoso`，再在对话中让 Agent 使用 `$yoso-trace-compiler` 导入。Compiler 不会移动或删除原始下载文件；导入成功后，多个网站和多条轨迹统一进入同一个 Browser Library，而不是各自生成一个站点 Skill。
+
+```text
+${YOSO_HOME:-$HOME/.yoso}/browser-library/v1/
+└── <traceId>/
+    ├── library.json
+    └── workflows/
+        └── <treeId>--<leafId>.json
+```
+
+可通过 `YOSO_HOME` 修改数据根目录。例如，默认位置在 Linux/WSL 中是 `~/.yoso/browser-library/v1/`，在原生 Windows 环境中等价于 `C:\Users\<用户名>\.yoso\browser-library\v1\`。当 Agent 和 `playwright-cli` 运行在 WSL、Chrome 运行在 Windows 时，library 默认仍保存在 WSL 文件系统；CDP/Extension 连接只负责跨环境控制浏览器，不会把 workflow 数据写入 Chrome profile。
+
 ## 核心能力
 
 | 能力 | 说明 |
@@ -144,6 +190,18 @@ npm run compile
 5. 让 Agent 使用 `$yoso-browser-library` 选择 workflow、补齐已脱敏的运行时输入，并 attach 用户已有的 Chrome session。
 6. Agent 每一步先观察页面、解析当前 locator，再执行操作；所有 CLI stdout/stderr 先由受控 wrapper 重定向到本轮私有易失目录，只返回脱敏后的最小状态；成功或失败后均只执行 detach 并清理该目录，不关闭外部浏览器。
 
+### 执行前 hard gate
+
+Browser Library 不会在“找到一个大概匹配的轨迹”后立即操作页面。以下校验全部通过，才允许进入后续执行：
+
+1. **Library 完整性**：根目录、catalog、workflow 引用、`schemaVersion`、ID、step 顺序与 action 类型合法。
+2. **唯一选择**：用户意图只能匹配到一条明确 workflow；有多个候选时先让用户选择。
+3. **运行时输入**：轨迹中被脱敏的必填值和文件路径已补齐，且不是 placeholder；secret 不写入 library、仓库、日志或对话输出。
+4. **连接边界**：只能 attach 用户已有 Chrome；任一静态校验失败都必须发生在 attach 或第一次页面变更之前。
+5. **逐步动态校验**：每一步操作前重新检查当前 URL/origin，并从 snapshot 中解析唯一且可见的目标；目标缺失、歧义或页面上下文不符时停止，不猜测点击。
+
+Compiler 也遵循对应的导入 gate：`.yoso` 先在临时目录完成 ZIP、schema、引用、安全与资源限制校验，通过后才原子写入正式 library；失败时不留下半成品。
+
 两个 Skill 可用官方 validator 检查：
 
 ```bash
@@ -161,20 +219,23 @@ uv run --with pyyaml python \
 Browser Library Skill 只允许显式 attach，不会静默执行 `open` 或启动一个替代浏览器。根据本机条件选择一种连接方式：
 
 ```bash
-# Chrome 144+：在 chrome://inspect/#remote-debugging 启用并批准当前实例
-playwright-cli -s=yoso attach --cdp=chrome
+# 以下是 Skill 内部传给 transcript-safe run_private wrapper 的参数，
+# 不是建议用户或 Agent 直接发起的裸 playwright-cli tool call。
 
-# Chrome 已在启动时暴露 CDP endpoint
-playwright-cli -s=yoso attach --cdp=http://127.0.0.1:9222
+# Chrome 144+：在 chrome://inspect/#remote-debugging 启用并批准当前实例
+run_private attach-channel attach --cdp=chrome
+
+# Chrome 已在启动时暴露 CDP endpoint；WSL 场景可替换为 Windows host 地址
+run_private attach-cdp attach --cdp=http://127.0.0.1:9222
 
 # 已安装并授权 Playwright Extension，需要复用现有 tabs 时
-playwright-cli -s=yoso attach --extension=chrome
+run_private attach-extension attach --extension=chrome
 
 # workflow 结束后只断开控制
-playwright-cli -s=yoso detach
+run_private detach detach
 ```
 
-传统 CDP endpoint 必须由 Chrome 预先开放；它不能把任意未启用调试的实例事后变成 9222 服务。Chrome、Playwright CLI/MCP 和跨 WSL/Windows 网络的版本差异见[本地 Chrome session 复用调研](docs/research/playwright-local-chrome-session-reuse.md)及 Browser Skill 的[连接说明](skills/yoso-browser-library/references/browser-connection.md)。
+`run_private` 是 Browser Skill 定义的同一 shell invocation 包装约定，不是需要用户全局安装的命令。传统 CDP endpoint 必须由 Chrome 预先开放；它不能把任意未启用调试的实例事后变成 9222 服务。使用单独 `--user-data-dir` 启动的调试实例也不等同于用户当前日常 Chrome session。Chrome、Playwright CLI/MCP 和跨 WSL/Windows 网络的版本差异见[本地 Chrome session 复用调研](docs/research/playwright-local-chrome-session-reuse.md)及 Browser Skill 的[连接说明](skills/yoso-browser-library/references/browser-connection.md)。
 
 `playwright-cli` 可能把页面 snapshot 自动写入当前目录，也可能把 post-action snapshot 返回 stdout。Browser Library Skill 因此禁止从仓库或 evidence 目录直接运行，也禁止把裸 CLI 调用作为 Agent tool call；所有输出必须先在同一 shell invocation 内重定向并脱敏。有 secret runtime input 时必须使用 memory-backed 私有目录，并在 finally 中 detach 后清除。无法提供这种安全执行通道时应在 attach 前停止。
 
