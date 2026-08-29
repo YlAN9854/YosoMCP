@@ -1,0 +1,4 @@
+interface:
+  display_name: "YOSO Browser Library"
+  short_description: "Run imported YOSO workflows in your real browser"
+  default_prompt: "Use $yoso-browser-library to run an imported YOSO workflow in my existing Chrome session."
