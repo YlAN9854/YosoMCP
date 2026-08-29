@@ -1,0 +1,4 @@
+interface:
+  display_name: "YOSO Trace Compiler"
+  short_description: "Validate, compile, and import YOSO Trace Packages"
+  default_prompt: "Use $yoso-trace-compiler to validate and import this .yoso Trace Package."
