@@ -75,7 +75,7 @@ required input：
 - `steps` 非空，node ID 不重复。
 - action type 属于支持集合。
 - 每个 redacted value/filePath 都有 required input，且 supplied value 不是空串、placeholder 或 `[REDACTED]`。
-- secret input 不得写入临时文件、shell history、日志或最终回复。
+- secret input 不得写入持久临时文件、shell history、日志或最终回复。CLI 自动 snapshot 只允许存在于本轮私有 memory-backed 运行目录，并须在 finally 清除。
 
 任何失败都必须发生在 attach 或第一条页面 mutation 前。
 

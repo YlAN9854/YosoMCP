@@ -142,7 +142,7 @@ npm run compile
 3. 打开**分支**页，点击**下载 Trace Package (.yoso)**。扩展在本地完成固定规则脱敏，不访问网络，也不调用 LLM。
 4. 让 Agent 使用 `$yoso-trace-compiler` 校验并导入 `.yoso`，得到本地 workflow library。
 5. 让 Agent 使用 `$yoso-browser-library` 选择 workflow、补齐已脱敏的运行时输入，并 attach 用户已有的 Chrome session。
-6. Agent 每一步先观察页面、解析当前 locator，再执行操作；成功或失败后均只运行 `playwright-cli -s=yoso detach`，不关闭外部浏览器。
+6. Agent 每一步先观察页面、解析当前 locator，再执行操作；CLI snapshot/daemon/cache 只进入本轮私有易失目录，含 secret 的输出先脱敏；成功或失败后均只运行 `playwright-cli -s=yoso detach` 并清理该目录，不关闭外部浏览器。
 
 两个 Skill 可用官方 validator 检查：
 
@@ -175,6 +175,8 @@ playwright-cli -s=yoso detach
 ```
 
 传统 CDP endpoint 必须由 Chrome 预先开放；它不能把任意未启用调试的实例事后变成 9222 服务。Chrome、Playwright CLI/MCP 和跨 WSL/Windows 网络的版本差异见[本地 Chrome session 复用调研](docs/research/playwright-local-chrome-session-reuse.md)及 Browser Skill 的[连接说明](skills/yoso-browser-library/references/browser-connection.md)。
+
+`playwright-cli` 可能把页面 snapshot 自动写入当前目录。Browser Library Skill 因此禁止从仓库或 evidence 目录直接运行；有 secret runtime input 时必须使用 memory-backed 私有目录，并在 finally 中 detach 后清除。无法提供这种安全执行通道时应在 attach 前停止。
 
 ## Legacy exports 兼容
 
