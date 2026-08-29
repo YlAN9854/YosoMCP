@@ -295,6 +295,13 @@ export const zh = {
   'branch.sessionExported': '会话文件已导出：{filename}\n策略：主站 + 登录链路\n域名数：{domains}\nCookie 数：{cookies}\n\n覆盖域名：\n{domainList}\n\n上传说明：将该文件内容写入服务器 ~/.yoso/session-broker/v1/<skillId>-session.json',
   'branch.sessionExportFailed': '会话导出失败：{msg}',
 
+  'trace.badge': 'Recorder · 默认脱敏',
+  'trace.download': '下载 Trace Package (.yoso)',
+  'trace.exporting': '正在生成 Trace Package…',
+  'trace.hint': '不包含输入值、文件路径、截图、提取文本、会话或 LLM 配置；selectors 与页面结构仍可能敏感。',
+  'trace.summary': '已导出 {nodes} 个节点，执行 {redactions} 项脱敏。',
+  'trace.error': '导出失败：{msg}',
+
   'recording.loopLabel': '循环x{repeat}({steps}步)',
   'recording.selectorInferFailed': '选择器模式推断失败',
   'recording.waitCommentLogin': '等待登录完成',

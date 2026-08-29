@@ -6,6 +6,7 @@ import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
 import type { Branch, BranchParam } from '@/types/branch'
 import { copyToClipboard, downloadAsZip, downloadJson } from '@/sidepanel/utils/export'
 import { useI18n } from '@/sidepanel/hooks/useI18n'
+import TracePackageCard from './TracePackageCard'
 
 function BranchSummaryLine({ branch }: { branch: Branch }) {
   const keyNodes = branch.path.filter(n =>
@@ -449,31 +450,32 @@ export default function BranchPanel() {
   const skillBlockedReasons = skillContent?.mode === 'blocked' ? skillContent.validation.blockedReasons : []
   const mcpBlockedReasons = mcpContent?.mode === 'blocked' ? mcpContent.validation.blockedReasons : []
 
-  if (sourceCount === 0) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center text-gray-400 text-sm gap-2 p-8">
-        <span className="text-4xl">🔀</span>
-        <span>{t('branch.noNodes')}</span>
-        <span className="text-xs">{t('branch.loadOrRecord')}</span>
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-3 py-2 bg-white border-b border-gray-200 flex items-center justify-between shrink-0">
-        <span className="text-xs font-medium text-gray-700">{t('branch.manage')}</span>
-        <button
-          onClick={handleExtract}
-          disabled={isExtracting}
-          className="px-2 py-1 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
-        >
-          {isExtracting ? t('branch.extracting') : branches.length > 0 ? t('branch.reextract') : t('branch.extractBranches')}
-        </button>
-      </div>
+      {sourceCount > 0 && (
+        <div className="px-3 py-2 bg-white border-b border-gray-200 flex items-center justify-between shrink-0">
+          <span className="text-xs font-medium text-gray-700">{t('branch.manage')}</span>
+          <button
+            type="button"
+            onClick={handleExtract}
+            disabled={isExtracting}
+            className="px-2 py-1 text-[10px] bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 transition-colors"
+          >
+            {isExtracting ? t('branch.extracting') : branches.length > 0 ? t('branch.reextract') : t('branch.extractBranches')}
+          </button>
+        </div>
+      )}
 
-      {branches.length === 0 ? (
+      <TracePackageCard />
+
+      {sourceCount === 0 ? (
+        <div className="flex flex-1 flex-col items-center justify-center text-gray-400 text-sm gap-2 p-8">
+          <span className="text-4xl">🔀</span>
+          <span>{t('branch.noNodes')}</span>
+          <span className="text-xs">{t('branch.loadOrRecord')}</span>
+        </div>
+      ) : branches.length === 0 ? (
         <div className="flex-1 flex items-center justify-center text-gray-400 text-xs p-8">
           <div className="text-center">
             <div className="text-3xl mb-2">🔀</div>

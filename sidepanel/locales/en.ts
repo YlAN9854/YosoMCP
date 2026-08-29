@@ -297,6 +297,13 @@ export const en = {
   'branch.sessionExported': 'Session exported: {filename}\nPolicy: main + login\nDomains: {domains}\nCookies: {cookies}\n\nDomains:\n{domainList}\n\nUpload: write file to server ~/.yoso/session-broker/v1/<skillId>-session.json',
   'branch.sessionExportFailed': 'Session export failed: {msg}',
 
+  'trace.badge': 'Recorder · Redacted by default',
+  'trace.download': 'Download Trace Package (.yoso)',
+  'trace.exporting': 'Generating Trace Package…',
+  'trace.hint': 'Excludes input values, file paths, screenshots, extracted text, sessions, and LLM settings; selectors and page structure may still be sensitive.',
+  'trace.summary': 'Exported {nodes} nodes with {redactions} redactions.',
+  'trace.error': 'Export failed: {msg}',
+
   'recording.loopLabel': 'loop×{repeat}({steps} steps)',
   'recording.selectorInferFailed': 'Selector pattern inference failed',
   'recording.waitCommentLogin': 'Wait for login',

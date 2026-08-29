@@ -6,7 +6,7 @@ export interface ZipFileEntry {
   content: string
 }
 
-export function downloadAsZip(files: ZipFileEntry[], zipFilename: string): void {
+export function downloadAsZip(files: readonly ZipFileEntry[], zipFilename: string): void {
   const zipData: Record<string, Uint8Array> = {}
 
   for (const file of files) {
