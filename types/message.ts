@@ -1,3 +1,6 @@
+import type { ToolSet } from './toolset'
+import type { TracePackageOutput } from './tracePackage'
+
 export interface Message<T = unknown> {
   type: string
   data?: T
@@ -23,6 +26,12 @@ export interface SkillSessionExportResult {
   content: string
   summary: SkillSessionExportSummary
 }
+
+export type TracePackageExportRequest = {
+  readonly toolSet: ToolSet
+}
+
+export type TracePackageExportResult = TracePackageOutput
 
 // ===== Side Panel → Background =====
 export const MSG = {
@@ -55,6 +64,7 @@ export const MSG = {
   GENERATE_MCP_SERVER: 'GENERATE_MCP_SERVER',
   VALIDATE_BRANCH_REPLAY: 'VALIDATE_BRANCH_REPLAY',
   EXPORT_SKILL_SESSION: 'EXPORT_SKILL_SESSION',
+  GENERATE_TRACE_PACKAGE: 'GENERATE_TRACE_PACKAGE',
 
   // 工具集
   TOOLSET_LIST: 'TOOLSET_LIST',
