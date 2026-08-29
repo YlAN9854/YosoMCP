@@ -1,6 +1,6 @@
 // Background 消息路由
 
-import { MSG, CS_MSG, EVENT, type Response, type LLMSettings } from '@/types/message'
+import { MSG, CS_MSG, EVENT, type Response, type LLMSettings, type TracePackageExportRequest } from '@/types/message'
 import type { RecordedAction } from '@/types/action'
 import type { OperationNode, OperationTreeInfo } from '@/types/operationTree'
 import type { ToolSet } from '@/types/toolset'
@@ -15,6 +15,7 @@ import { registerTool } from './analyzer/toolRegistration'
 import { generateBranchCode } from './generator/branchCodeGen'
 import { generateSkill } from './generator/skillGen'
 import { generateMcpServer } from './generator/mcpGen'
+import { generateTracePackage } from './generator/tracePackageGen'
 import { sendToContentScript, broadcastToSidePanel } from '@/utils/messaging'
 import { callLLM } from './analyzer/semantic/llmClient'
 import { validateBranchReplay } from './replayValidationService'
@@ -23,6 +24,24 @@ import type { Branch } from '@/types/branch'
 
 /** Background 自广播给侧栏的 EVENT，不应按「侧栏请求」走 handleSidePanelMessage */
 const SIDE_PANEL_EVENT_TYPES = new Set<string>(Object.values(EVENT) as string[])
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isTracePackageExportRequest(data: unknown): data is TracePackageExportRequest {
+  if (!isRecord(data) || !isRecord(data.toolSet)) return false
+  const toolSet = data.toolSet
+  return typeof toolSet.id === 'string'
+    && typeof toolSet.name === 'string'
+    && typeof toolSet.description === 'string'
+    && typeof toolSet.createdAt === 'number'
+    && typeof toolSet.updatedAt === 'number'
+    && Array.isArray(toolSet.operationTrees)
+    && Array.isArray(toolSet.operationNodes)
+    && Array.isArray(toolSet.tools)
+    && isRecord(toolSet.metadata)
+}
 
 export function setupMessageRouter() {
   chrome.runtime.onMessage.addListener(
@@ -207,6 +226,17 @@ async function handleSidePanelMessage(type: string, data: unknown): Promise<Resp
       }
       const exported = await exportSkillSession({ branches: exportBranches, toolSetName, strategy })
       return { success: true, data: exported }
+    }
+    case MSG.GENERATE_TRACE_PACKAGE: {
+      if (!isTracePackageExportRequest(data)) {
+        return { success: false, error: 'TRACE_PACKAGE_INVALID_REQUEST' }
+      }
+      const tracePackage = generateTracePackage(data.toolSet, {
+        packageId: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+        producerVersion: chrome.runtime.getManifest().version,
+      })
+      return { success: true, data: tracePackage }
     }
 
     // 工具集
