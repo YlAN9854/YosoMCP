@@ -2,3 +2,6 @@
 
 export { generateMcpServer } from './mcpGen'
 export type { McpOutput } from './mcpGen'
+export { generateTracePackage } from './tracePackageGen'
+export { redactToolSetToTrace } from './traceRedactor'
+export { TracePackageError } from './traceGraph'
