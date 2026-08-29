@@ -75,7 +75,7 @@ workflow entries 按 `workflowId` 排序。`importedAt` 由执行导入的 Agent
 对每个 step 的 `action.redactedFields`：
 
 - `action-value`：生成 `field: "value"`。若 node metadata 的 `enumParamName` 匹配 `^[A-Za-z_][A-Za-z0-9_]*$`，name 使用它；否则使用 `value_<1-based-step-index>`。
-- `file-path`：生成 `field: "filePath"`。若 action 的 `filePathArgName` 匹配同一变量名规则，name 使用它；否则使用 `filePath_<1-based-step-index>`。
+- `file-path`：生成 `field: "filePath"`。Recorder 对每个 `upload` 动作都必须发出此 code，即使录制时从未读取真实路径；若 action 的 `filePathArgName` 匹配同一变量名规则，name 使用它，否则使用 `filePath_<1-based-step-index>`。
 - 同一 action 含 `credential` 时，value input 的 `secret` 为 true；其他 input 为 false。
 - `reason` 固定为产生该 input 的 `action-value` 或 `file-path`。
 

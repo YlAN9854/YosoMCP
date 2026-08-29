@@ -152,7 +152,9 @@ function redactAction(action: RecordedAction, path: string, collector: Redaction
     addRedaction(collector, `${path}/value`, 'action-value', codes)
     if (isCredentialAction(action)) addRedaction(collector, `${path}/value`, 'credential', codes)
   }
-  if (action.filePath !== undefined) addRedaction(collector, `${path}/filePath`, 'file-path', codes)
+  if (action.type === 'upload' || action.filePath !== undefined) {
+    addRedaction(collector, `${path}/filePath`, 'file-path', codes)
+  }
   if (action.attributes !== undefined) addRedaction(collector, `${path}/attributes`, 'attributes', codes)
   if (action.extractedText !== undefined) addRedaction(collector, `${path}/extractedText`, 'extracted-text', codes)
   if (action.extractedScreenshot !== undefined) addRedaction(collector, `${path}/extractedScreenshot`, 'screenshot', codes)

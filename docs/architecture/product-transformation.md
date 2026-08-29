@@ -135,6 +135,7 @@ Trace 明确不包含：branches、tools、analysis cache、generated code、ses
 
 - `action.value`
 - `action.filePath`
+- `upload` 动作即使未记录真实路径，也必须发出 `file-path` 脱敏事件，供 Compiler 生成运行时文件输入。
 - `action.attributes` 与 candidate attributes
 - `action.extractedText`
 - `action.extractedScreenshot`
