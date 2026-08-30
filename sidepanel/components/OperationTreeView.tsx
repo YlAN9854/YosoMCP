@@ -1,6 +1,5 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import type { OperationNode } from '@/types/operationTree'
-import { getAllUnconfirmedNodeIdsInTree } from '@/background/analyzer/branchExtractor'
 import { LOOP_BODY_END_SELF } from '@/types/operationTree'
 import type { ActionType } from '@/types/action'
 import type { NodeRole } from '@/types/operationTree'
@@ -10,6 +9,7 @@ import { useReplayStore } from '@/sidepanel/stores/replayStore'
 import NodeContextMenu from './NodeContextMenu'
 import { useI18n } from '@/sidepanel/hooks/useI18n'
 import { getActionLabel, getRoleLabel, ROLE_STYLES } from '@/sidepanel/utils/actionLabels'
+import { getPendingConfirmationNodeIds } from '@/sidepanel/utils/pendingConfirmations'
 
 // ===== Layout Constants =====
 const FULL_W = 180
@@ -893,7 +893,7 @@ export default function OperationTreeView() {
   const layout = useMemo(() => (tree ? computeLayout(tree, activeBranchMap) : null), [tree, activeBranchMap])
 
   const pendingConfirmationIds = useMemo(
-    () => getAllUnconfirmedNodeIdsInTree(visibleNodes),
+    () => getPendingConfirmationNodeIds(visibleNodes),
     [visibleNodes]
   )
 

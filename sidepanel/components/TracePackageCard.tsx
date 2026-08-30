@@ -84,7 +84,7 @@ export default function TracePackageCard() {
   }
 
   return (
-    <section className="shrink-0 border-b border-violet-100 bg-white px-3 py-2">
+    <section className="shrink-0 border-t border-violet-100 bg-white px-3 py-2">
       <div className="rounded-lg border border-violet-100 bg-violet-50/60 p-2 space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs font-semibold text-violet-800">YOSO Trace Package</span>

@@ -299,7 +299,7 @@ export const zh = {
   'trace.copied': '已复制，可直接粘贴到 Agent 对话中。',
   'trace.download': '下载 .yoso 备用文件',
   'trace.downloading': '正在生成并下载…',
-  'trace.hint': '复制内容已排除输入值、文件路径、截图、提取文本、会话和 LLM 配置；selectors 与页面结构仍可能敏感。',
+  'trace.hint': '复制内容已排除输入值、文件路径、截图、提取文本和会话信息；selectors 与页面结构仍可能敏感。',
   'trace.downloaded': '已下载备用文件：{nodes} 个节点，执行 {redactions} 项脱敏。',
   'trace.summary': '已导出 {nodes} 个节点，执行 {redactions} 项脱敏。',
   'trace.error': '导出失败：{msg}',

@@ -301,7 +301,7 @@ export const en = {
   'trace.copied': 'Copied. Paste it directly into your Agent conversation.',
   'trace.download': 'Download .yoso backup',
   'trace.downloading': 'Generating and downloading…',
-  'trace.hint': 'Copied content excludes input values, file paths, screenshots, extracted text, sessions, and LLM settings; selectors and page structure may still be sensitive.',
+  'trace.hint': 'Copied content excludes input values, file paths, screenshots, extracted text, and session data; selectors and page structure may still be sensitive.',
   'trace.downloaded': 'Backup downloaded: {nodes} nodes with {redactions} redactions.',
   'trace.summary': 'Exported {nodes} nodes with {redactions} redactions.',
   'trace.error': 'Export failed: {msg}',

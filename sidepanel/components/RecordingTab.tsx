@@ -19,6 +19,7 @@ import { useReplayStore } from '@/sidepanel/stores/replayStore'
 import { useLocaleStore } from '@/sidepanel/stores/localeStore'
 import { translate } from '@/sidepanel/locales/translate'
 import type { ReplayStepResult, ReplayCompleteResult } from '@/types/operationTree'
+import TracePackageCard from './TracePackageCard'
 
 export default function RecordingTab() {
   const addAction = useRecorderStore(s => s.addAction)
@@ -371,12 +372,12 @@ export default function RecordingTab() {
   }, [addAction, setStatus, handleStepResult, handleComplete, handleAborted])
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="relative flex h-full min-h-0 flex-col">
       <RecordingControls />
-      <div className="flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-auto">
         <OperationTreeView />
       </div>
-      {/* Replay Overlay */}
+      <TracePackageCard />
       {replayStatus !== 'idle' && <ReplayOverlay />}
     </div>
   )
