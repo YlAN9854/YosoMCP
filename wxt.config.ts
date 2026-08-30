@@ -17,13 +17,9 @@ export default defineConfig({
       'storage',
       'tabs',
       'scripting',
-      'downloads',
       'webNavigation',
-      'cookies',
     ],
     host_permissions: [
-      'https://api.openai.com/*',
-      'https://api.anthropic.com/*',
       '<all_urls>',
     ],
     side_panel: {

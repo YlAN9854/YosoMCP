@@ -1,5 +1,3 @@
-import type { ToolDefinition } from './tool'
-
 export interface OperationSignature {
   nodeId: string
   signature: string
@@ -79,27 +77,4 @@ export interface StructuralAnalysisResult {
   enumBranchGroups: EnumBranchGroup[]
   splitPoints: SplitPoint[]
   toolSegments: ToolSegment[]
-}
-
-export interface AnalysisResult {
-  tools: ToolDefinition[]
-  paramSuggestions: {
-    nodeId: string
-    name: string
-    type: 'string' | 'number' | 'boolean'
-    description: string
-    defaultValue: unknown
-    source: 'fill_input' | 'loop_count' | 'enum_branch'
-  }[]
-  splitSuggestions: { nodeId: string; reason: string }[]
-  structuralResult: StructuralAnalysisResult
-  warnings: { type: string; message: string }[]
-}
-
-export interface AnalysisProgress {
-  stage: 'structural' | 'semantic' | 'generation'
-  stageName: string
-  status: 'running' | 'completed' | 'error'
-  message?: string
-  percent?: number
 }

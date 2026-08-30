@@ -13,20 +13,6 @@ export interface Response<T = unknown> {
   error?: string
 }
 
-export type SessionExportStrategy = 'main-and-login-chain'
-
-export interface SkillSessionExportSummary {
-  strategy: SessionExportStrategy
-  domains: string[]
-  cookieCount: number
-}
-
-export interface SkillSessionExportResult {
-  filename: string
-  content: string
-  summary: SkillSessionExportSummary
-}
-
 export type TracePackageExportRequest = {
   readonly toolSet: ToolSet
 }
@@ -42,28 +28,10 @@ export const MSG = {
   STOP_RECORDING: 'STOP_RECORDING',
   GET_RECORDING_STATUS: 'GET_RECORDING_STATUS',
 
-  // 节点操作
-  DELETE_NODE: 'DELETE_NODE',
-  UPDATE_NODE_METADATA: 'UPDATE_NODE_METADATA',
-  MARK_TOOL_BOUNDARY: 'MARK_TOOL_BOUNDARY',
-  SET_BRANCH_LABEL: 'SET_BRANCH_LABEL',
-  INSERT_WAIT_ACTION: 'INSERT_WAIT_ACTION',
-
   // 分析
   ANALYZE_STRUCTURAL: 'ANALYZE_STRUCTURAL',
-  SCORE_BRANCH_CANDIDATES: 'SCORE_BRANCH_CANDIDATES',
   ANALYZE_NODE_ROLES: 'ANALYZE_NODE_ROLES',
 
-  // 分支管线
-  EXTRACT_BRANCHES: 'EXTRACT_BRANCHES',
-  REGISTER_TOOL: 'REGISTER_TOOL',
-  GENERATE_BRANCH_CODE: 'GENERATE_BRANCH_CODE',
-  ASSEMBLE_SERVER: 'ASSEMBLE_SERVER',
-  GENERATE_README: 'GENERATE_README',
-  GENERATE_SKILL: 'GENERATE_SKILL',
-  GENERATE_MCP_SERVER: 'GENERATE_MCP_SERVER',
-  VALIDATE_BRANCH_REPLAY: 'VALIDATE_BRANCH_REPLAY',
-  EXPORT_SKILL_SESSION: 'EXPORT_SKILL_SESSION',
   GENERATE_TRACE_PACKAGE: 'GENERATE_TRACE_PACKAGE',
 
   // 工具集
@@ -72,11 +40,6 @@ export const MSG = {
   TOOLSET_LOAD: 'TOOLSET_LOAD',
   TOOLSET_SAVE: 'TOOLSET_SAVE',
   TOOLSET_DELETE: 'TOOLSET_DELETE',
-
-  // 设置
-  GET_SETTINGS: 'GET_SETTINGS',
-  SAVE_SETTINGS: 'SAVE_SETTINGS',
-  TEST_LLM_SETTINGS: 'TEST_LLM_SETTINGS',
 
   // 回溯重放
   REPLAY_START: 'REPLAY_START',
@@ -163,26 +126,3 @@ export const CS_MSG = {
   CAPTURE_VISIBLE_TAB: 'CS_CAPTURE_VISIBLE_TAB',
   TEST_SELECTOR_HIGHLIGHT: 'CS_TEST_SELECTOR_HIGHLIGHT',
 } as const
-
-export interface LLMSettings {
-  provider: 'openai' | 'anthropic' | 'openai-compatible'
-  apiKey: string
-  model: string
-  baseURL?: string
-}
-
-export interface AppSettings {
-  llm: LLMSettings
-  // 是否在导出工具集文件时一并保存当前 LLM 配置
-  llmSaveToToolset?: boolean
-}
-
-export const DEFAULT_SETTINGS: AppSettings = {
-  llm: {
-    provider: 'openai',
-    apiKey: '',
-    model: 'gpt-4o',
-    baseURL: '',
-  },
-  llmSaveToToolset: false,
-}

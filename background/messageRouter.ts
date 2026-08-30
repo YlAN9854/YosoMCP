@@ -1,26 +1,16 @@
 // Background 消息路由
 
-import { MSG, CS_MSG, EVENT, type Response, type LLMSettings, type TracePackageExportRequest } from '@/types/message'
+import { MSG, CS_MSG, EVENT, type Response, type TracePackageExportRequest } from '@/types/message'
 import type { RecordedAction } from '@/types/action'
 import type { OperationNode, OperationTreeInfo } from '@/types/operationTree'
 import type { ToolSet } from '@/types/toolset'
 import { recorderController } from './recorderController'
 import { replayController } from './replayController'
 import { storageManager } from './storage'
-import { loadSettings, saveSettings } from './storage/settings'
 import { runStructuralAnalysis } from './analyzer/structural'
 import { analyzeNodeRoles } from './analyzer/structural/nodeRoleAnalyzer'
-import { extractBranches } from './analyzer/branchExtractor'
-import { registerTool } from './analyzer/toolRegistration'
-import { generateBranchCode } from './generator/branchCodeGen'
-import { generateSkill } from './generator/skillGen'
-import { generateMcpServer } from './generator/mcpGen'
 import { generateTracePackage } from './generator/tracePackageGen'
 import { sendToContentScript, broadcastToSidePanel } from '@/utils/messaging'
-import { callLLM } from './analyzer/semantic/llmClient'
-import { validateBranchReplay } from './replayValidationService'
-import { exportSkillSession } from './sessionExportService'
-import type { Branch } from '@/types/branch'
 
 /** Background 自广播给侧栏的 EVENT，不应按「侧栏请求」走 handleSidePanelMessage */
 const SIDE_PANEL_EVENT_TYPES = new Set<string>(Object.values(EVENT) as string[])
@@ -39,7 +29,6 @@ function isTracePackageExportRequest(data: unknown): data is TracePackageExportR
     && typeof toolSet.updatedAt === 'number'
     && Array.isArray(toolSet.operationTrees)
     && Array.isArray(toolSet.operationNodes)
-    && Array.isArray(toolSet.tools)
     && isRecord(toolSet.metadata)
 }
 
@@ -174,59 +163,6 @@ async function handleSidePanelMessage(type: string, data: unknown): Promise<Resp
       return { success: true, data: structuralResult }
     }
 
-    // 分支管线
-    case MSG.EXTRACT_BRANCHES: {
-      const { nodes: branchNodes } = data as { nodes: OperationNode[] }
-      const branches = extractBranches(branchNodes)
-      return { success: true, data: branches }
-    }
-    case MSG.REGISTER_TOOL: {
-      const { branch, llmSettings: regLlm, hint } = data as {
-        branch: Parameters<typeof registerTool>[0]
-        llmSettings?: Parameters<typeof registerTool>[1]
-        hint?: string
-      }
-      const registration = await registerTool(branch, regLlm, hint)
-      return { success: true, data: registration }
-    }
-    case MSG.GENERATE_BRANCH_CODE: {
-      const { branch: codeBranch } = data as { branch: Parameters<typeof generateBranchCode>[0] }
-      const branchCode = generateBranchCode(codeBranch)
-      return { success: true, data: branchCode }
-    }
-    case MSG.GENERATE_SKILL: {
-      const { branches: skillBranches, toolSetName: skillToolSetName, llmSettings: skillLlm, hint } = data as {
-        branches: Parameters<typeof generateSkill>[0]
-        toolSetName: string
-        llmSettings?: LLMSettings
-        hint?: string
-      }
-      const skillOutput = await generateSkill(skillBranches, skillToolSetName, skillLlm, hint)
-      return { success: true, data: skillOutput }
-    }
-    case MSG.GENERATE_MCP_SERVER: {
-      const { branches: mcpBranches, toolSetName: mcpToolSetName, llmSettings: mcpLlm } = data as {
-        branches: Parameters<typeof generateMcpServer>[0]
-        toolSetName: string
-        llmSettings?: LLMSettings
-      }
-      const mcpOutput = await generateMcpServer(mcpBranches, mcpToolSetName, mcpLlm)
-      return { success: true, data: mcpOutput }
-    }
-    case MSG.VALIDATE_BRANCH_REPLAY: {
-      const { branch: validationBranch } = data as { branch: Parameters<typeof validateBranchReplay>[0] }
-      const result = validateBranchReplay(validationBranch)
-      return { success: true, data: result }
-    }
-    case MSG.EXPORT_SKILL_SESSION: {
-      const { branches: exportBranches, toolSetName, strategy } = data as {
-        branches: Parameters<typeof exportSkillSession>[0]['branches']
-        toolSetName: string
-        strategy?: Parameters<typeof exportSkillSession>[0]['strategy']
-      }
-      const exported = await exportSkillSession({ branches: exportBranches, toolSetName, strategy })
-      return { success: true, data: exported }
-    }
     case MSG.GENERATE_TRACE_PACKAGE: {
       if (!isTracePackageExportRequest(data)) {
         return { success: false, error: 'TRACE_PACKAGE_INVALID_REQUEST' }
@@ -241,13 +177,12 @@ async function handleSidePanelMessage(type: string, data: unknown): Promise<Resp
 
     // 工具集
     case MSG.TOOLSET_CREATE: {
-      const { name, description, nodes, operationTrees, targetUrl, branches } = data as {
+      const { name, description, nodes, operationTrees, targetUrl } = data as {
         name: string
         description?: string
         nodes?: OperationNode[]
         operationTrees?: OperationTreeInfo[]
         targetUrl?: string
-        branches?: Branch[]
       }
       const newToolSet: ToolSet = {
         id: crypto.randomUUID(),
@@ -258,9 +193,7 @@ async function handleSidePanelMessage(type: string, data: unknown): Promise<Resp
         targetUrl,
         operationTrees: operationTrees ?? [],
         operationNodes: nodes ?? [],
-        branches: branches ?? [],
-        tools: [],
-        metadata: { replayValidationVersion: 1 },
+        metadata: {},
       }
       await storageManager.saveToolSet(newToolSet)
       return { success: true, data: newToolSet }
@@ -282,26 +215,6 @@ async function handleSidePanelMessage(type: string, data: unknown): Promise<Resp
       const id = typeof data === 'string' ? data : (data as { id: string }).id
       await storageManager.deleteToolSet(id)
       return { success: true }
-    }
-
-    // 设置
-    case MSG.GET_SETTINGS: {
-      const settings = await loadSettings()
-      return { success: true, data: settings }
-    }
-    case MSG.SAVE_SETTINGS: {
-      await saveSettings(data as Parameters<typeof saveSettings>[0])
-      return { success: true }
-    }
-    case MSG.TEST_LLM_SETTINGS: {
-      const { llmSettings } = data as { llmSettings: LLMSettings }
-      // 这里做一次极简调用，验证 baseURL / key / model 是否可用
-      const sample = await callLLM(
-        llmSettings,
-        'You are a configuration test for a browser extension.',
-        'Reply with a short word: OK.'
-      )
-      return { success: true, data: { sample } }
     }
 
     // 回溯重放
