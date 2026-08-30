@@ -246,6 +246,7 @@ export default function RecordingTab() {
         }
         case EVENT.REPLAY_ABORTED:
           handleAborted()
+          useRecorderStore.getState().resetTreeRecording()
           break
         case EVENT.SELECTOR_PICKER_RESULT: {
           // 拾取结果已包含推断结果（在 content script 中完成推断）
