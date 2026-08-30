@@ -298,9 +298,14 @@ export const en = {
   'branch.sessionExportFailed': 'Session export failed: {msg}',
 
   'trace.badge': 'Recorder · Redacted by default',
-  'trace.download': 'Download Trace Package (.yoso)',
-  'trace.exporting': 'Generating Trace Package…',
-  'trace.hint': 'Excludes input values, file paths, screenshots, extracted text, sessions, and LLM settings; selectors and page structure may still be sensitive.',
+  'trace.copy': 'Copy for Agent',
+  'trace.copying': 'Generating and copying…',
+  'trace.copiedButton': 'Copied',
+  'trace.copied': 'Copied. Paste it directly into your Agent conversation.',
+  'trace.download': 'Download .yoso backup',
+  'trace.downloading': 'Generating and downloading…',
+  'trace.hint': 'Copied content excludes input values, file paths, screenshots, extracted text, sessions, and LLM settings; selectors and page structure may still be sensitive.',
+  'trace.downloaded': 'Backup downloaded: {nodes} nodes with {redactions} redactions.',
   'trace.summary': 'Exported {nodes} nodes with {redactions} redactions.',
   'trace.error': 'Export failed: {msg}',
 

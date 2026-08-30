@@ -296,9 +296,14 @@ export const zh = {
   'branch.sessionExportFailed': '会话导出失败：{msg}',
 
   'trace.badge': 'Recorder · 默认脱敏',
-  'trace.download': '下载 Trace Package (.yoso)',
-  'trace.exporting': '正在生成 Trace Package…',
-  'trace.hint': '不包含输入值、文件路径、截图、提取文本、会话或 LLM 配置；selectors 与页面结构仍可能敏感。',
+  'trace.copy': '复制给 Agent',
+  'trace.copying': '正在生成并复制…',
+  'trace.copiedButton': '已复制',
+  'trace.copied': '已复制，可直接粘贴到 Agent 对话中。',
+  'trace.download': '下载 .yoso 备用文件',
+  'trace.downloading': '正在生成并下载…',
+  'trace.hint': '复制内容已排除输入值、文件路径、截图、提取文本、会话和 LLM 配置；selectors 与页面结构仍可能敏感。',
+  'trace.downloaded': '已下载备用文件：{nodes} 个节点，执行 {redactions} 项脱敏。',
   'trace.summary': '已导出 {nodes} 个节点，执行 {redactions} 项脱敏。',
   'trace.error': '导出失败：{msg}',
 

@@ -5,7 +5,7 @@
 YOSO 从“录制后生成固定 Playwright 脚本，再包装为 MCP Server”转向“录制事实、编译语义轨迹、由 Agent 在真实浏览器中动态执行”的三层产品：
 
 1. **YOSO Recorder extension**：浏览器插件只负责录制、归一化、默认脱敏和导出，不在新的 Trace 主路径中调用 LLM。
-2. **`yoso-trace-compiler` Skill**：验证 `.yoso` Trace Package，把 root-to-leaf 轨迹编译成可检索、可参数化的 workflow library。
+2. **`yoso-trace-compiler` Skill**：验证 `.yoso` Trace Package 或粘贴的 Clipboard Envelope，把 root-to-leaf 轨迹编译成可检索、可参数化的 workflow library。
 3. **`yoso-browser-library` Skill**：根据用户意图检索 workflow，以记录的轨迹为指导，先理解当前页面，再通过 Playwright CLI/CDP/Extension 驱动用户已经打开的真实浏览器。
 
 本次转型保留原有 ToolSet JSON、MCP、可执行 Skill 和 session 导出。新能力是并行增加的主路径，不是一次破坏性迁移。
@@ -26,8 +26,8 @@ YOSO Recorder extension
   录制 → 归一化 → allowlist → 默认脱敏
   │
   ▼
-versioned .yoso Trace Package
-  manifest.json + trace.json
+versioned Trace export
+  Clipboard Envelope（主）或 .yoso ZIP（备用）
   │
   ▼
 yoso-trace-compiler Skill
@@ -56,16 +56,17 @@ Recorder 是事实采集器和安全导出边界：
 - 只使用显式 allowlist 创建新对象，不把 ToolSet 原对象直接序列化后再删除字段。
 - 新 Trace 导出不访问网络、不调用 LLM、不依赖 branch 分析或 `code-ready` 状态。
 - 当前 ToolSet 至少有一个 operation node 时即可导出。
-- Side Panel 只负责触发 background 生成并把两个文本条目压成 `.yoso` ZIP。
+- Side Panel 只负责触发 background 生成同一份 manifest/trace；主入口复制 versioned Clipboard Envelope，次入口把两个文本条目压成 `.yoso` ZIP 下载备用。
 
 Recorder 不负责：理解业务意图、给 workflow 命名、生成固定脚本、导入 library、连接或控制真实浏览器。
 
 ### 4.2 `yoso-trace-compiler` Skill
 
-Compiler 是不可信文件与用户 library 之间的边界：
+Compiler 是不可信文件或粘贴文本与用户 library 之间的边界：
 
-- 只接受固定的 `.yoso` ZIP 容器和已知版本。
-- 拒绝额外条目、绝对路径、`..`、symlink、未知 format/schema/redaction policy。
+- 只接受固定的 `.yoso` ZIP，或含唯一 `YOSO_TRACE_CLIPBOARD_V1` sentinel 的 Clipboard Envelope；两者都只接受已知版本。
+- ZIP 拒绝额外条目、绝对路径、`..` 和 symlink；Envelope 拒绝多 sentinel、多 JSON、尾随指令和额外根字段。
+- 两种容器解析后共享 manifest、trace、schema 和 redaction policy 验证，不从文本重建 ZIP。
 - 重算树图、脱敏计数与 root-to-leaf 路径，拒绝 cycle、orphan、共享 node 和非法 ID。
 - 把每条 root-to-leaf 路径编译成 workflow；把已脱敏的 value/file path 转成运行时必填参数。
 - 使用临时目录生成完整结果，验证成功后原子替换 library 中对应的 `traceId` 目录。
@@ -83,11 +84,21 @@ Browser Library Skill 是运行时路由器和执行协议：
 
 Skill 不导出 cookies/localStorage，不绕过 Chrome 的远程调试授权，也不悄悄启动隔离浏览器作为“真实 session”的替代品。
 
-## 5. Trace Package v1
+## 5. Trace Export v1
 
 ### 5.1 容器
 
-`.yoso` 是 ZIP 容器，v1 顶层条目及顺序固定为：
+主路径的 Clipboard Envelope v1 是：
+
+```text
+请使用 $yoso-trace-compiler 验证并导入以下 YOSO 剪贴板轨迹。
+YOSO_TRACE_CLIPBOARD_V1
+{"format":"yoso-trace-clipboard","formatVersion":1,"manifest":{...},"trace":{...}}
+```
+
+sentinel 必须精确出现一次；其后只允许一个 JSON 值和尾随空白。Envelope 根字段精确为 `format`、`formatVersion`、`manifest`、`trace`。
+
+备用 `.yoso` 是 ZIP 容器，v1 顶层条目及顺序固定为：
 
 ```text
 manifest.json
@@ -98,9 +109,10 @@ trace.json
 
 ### 5.2 版本
 
-v1 同时维护三个独立版本：
+v1 同时维护四个独立版本：
 
-- `formatVersion`：ZIP 容器和 manifest 结构。
+- Clipboard Envelope `formatVersion`：剪贴板容器结构。
+- manifest `formatVersion`：Trace Package manifest 结构。
 - `traceSchemaVersion` / `schemaVersion`：Trace 文档结构。
 - `redaction.policyVersion`：默认脱敏策略。
 
@@ -158,7 +170,7 @@ action 级事件还会把 code 加入该 action 的 `redactedFields`。Compiler 
 
 ### 6.3 安全边界
 
-safe-default 不是通用 PII anonymizer。selector、页面可见文本、站点路径和结构本身仍可能暴露业务信息，因此 `.yoso` 仍应按敏感文件处理，只分享给可信接收方。v1 不提供“关闭脱敏”开关。
+safe-default 不是通用 PII anonymizer。selector、页面可见文本、站点路径和结构本身仍可能暴露业务信息，因此 Clipboard Envelope 与 `.yoso` 都应按敏感数据处理，只分享给可信接收方。v1 不提供“关闭脱敏”开关。
 
 ## 7. Browser workflow library
 
@@ -188,11 +200,12 @@ Skill 的 metadata/description 负责稳定触发：当用户显式或隐式要�
 
 | 错误 | 层 | 处理 |
 |---|---|---|
-| `TRACE_PACKAGE_EMPTY` | Recorder | 当前 ToolSet 无 node；UI 不下载 |
+| `TRACE_PACKAGE_EMPTY` | Recorder | 当前 ToolSet 无 node；UI 不复制或下载 |
 | `TRACE_PACKAGE_INVALID_ID` | Recorder/Compiler | ID 或文件名不安全；停止且无落盘副作用 |
 | `TRACE_PACKAGE_INVALID_TREE` | Recorder/Compiler | 图不满足不变量；停止且报告结构问题 |
 | `TRACE_PACKAGE_UNSUPPORTED_VERSION` | Compiler | 未知 format/schema/policy；拒绝降级 |
 | `TRACE_PACKAGE_INVALID_ARCHIVE` | Compiler | 条目、路径或 ZIP 类型非法；拒绝解包 |
+| `TRACE_PACKAGE_INVALID_CLIPBOARD` | Compiler | sentinel、JSON 边界、Envelope 字段或版本非法；拒绝导入 |
 | `WORKFLOW_INPUT_REQUIRED` | Runtime | 缺少 value/file/secret 参数；首个动作前停止 |
 | `WORKFLOW_TARGET_AMBIGUOUS` | Runtime | locator 命中不唯一；不猜测、不继续 |
 | `WORKFLOW_NAVIGATION_DIVERGED` | Runtime | 当前页面偏离预期；报告最后成功步骤 |
@@ -202,7 +215,8 @@ Skill 的 metadata/description 负责稳定触发：当用户显式或隐式要�
 
 | 能力 | 转型后状态 | 说明 |
 |---|---|---|
-| `.yoso` Trace Package | 新主路径 | 无 LLM、默认脱敏、交给 Compiler Skill |
+| Clipboard Envelope | 新主路径 | 无 LLM、默认脱敏，复制并粘贴给 Compiler Skill |
+| `.yoso` Trace Package | 保留备用 | 与 Envelope 同源，供剪贴板不可用或归档场景 |
 | `.yoso.json` ToolSet | 保留 | 现有导入/导出与 IndexedDB 不变 |
 | `*-skill.zip` | 保留 | 旧的固定脚本式可执行 Skill |
 | `*-mcp-server.zip` | 保留 | 旧 MCP Server 生成与门禁不变 |
@@ -213,7 +227,7 @@ Skill 的 metadata/description 负责稳定触发：当用户显式或隐式要�
 
 - Content Script 产生的录制消息不可信；background 只从当前 ToolSet snapshot 生成导出。
 - Side Panel 不能提供 package ID、producer version 或 server timestamp；这些由 background 注入。
-- `.yoso` 对 Compiler 是不可信输入，验证完成前不得写入正式 library。
+- Clipboard Envelope 和 `.yoso` 对 Compiler 都是不可信输入，验证完成前不得写入正式 library。
 - workflow library 对 Runtime 提供指导，不拥有浏览器授权；Chrome 用户批准是独立边界。
 - Browser Skill 每步重新观测页面，不能把录制 selector 当成必然正确的命令。
 

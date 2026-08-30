@@ -1,6 +1,6 @@
 # YOSO
 
-**YOSO** 是一套以 Chrome 扩展为入口的 browser workflow 系统。用户在真实网页上演示操作，扩展将轨迹录制、规范化并默认脱敏，导出为 versioned **YOSO Trace Package（`.yoso`）**；Agent 再通过仓库内的两个 Skill 将轨迹编译为 workflow library，并在用户已经打开的 Chrome session 中动态理解页面、执行操作。
+**YOSO** 是一套以 Chrome 扩展为入口的 browser workflow 系统。用户在真实网页上演示操作，扩展将轨迹录制、规范化并默认脱敏；可一键复制 versioned Clipboard Envelope 给 Agent，也可下载 **YOSO Trace Package（`.yoso`）** 备用。Agent 再通过仓库内的两个 Skill 将轨迹编译为 workflow library，并在用户已经打开的 Chrome session 中动态理解页面、执行操作。
 
 新的主路径不再把 CSS selector 固化脚本当作唯一真相。轨迹描述保留操作意图、顺序和必要的页面线索，执行时由 Agent 重新观察当前页面并选择目标元素，从而更好地适应页面结构变化。完整设计见[产品转型架构](docs/architecture/product-transformation.md)。
 
@@ -10,22 +10,27 @@
 
 | 组件 | 职责 | 是否调用 LLM |
 |------|------|:---:|
-| **YOSO Recorder 扩展** | 录制操作树、做结构标注、按固定 allowlist 脱敏并导出 `.yoso`。 | 否 |
-| [`yoso-trace-compiler`](skills/yoso-trace-compiler/SKILL.md) | 把不可信 `.yoso` 校验、编译并原子导入本地 workflow library；不操作浏览器。 | 否 |
+| **YOSO Recorder 扩展** | 录制操作树、做结构标注、按固定 allowlist 脱敏并复制 Clipboard Envelope；`.yoso` 作为下载备用。 | 否 |
+| [`yoso-trace-compiler`](skills/yoso-trace-compiler/SKILL.md) | 把不可信 `.yoso` 或粘贴 Envelope 校验、编译并原子导入本地 workflow library；不操作浏览器。 | 否 |
 | [`yoso-browser-library`](skills/yoso-browser-library/SKILL.md) | 查找已导入 workflow，收集运行时输入，连接已有 Chrome，观察页面后逐步执行并 detach。 | 否 |
 
 三部分的数据流是：
 
 ```text
-用户演示 → Recorder → <workflow>.yoso
-                         ↓
-               yoso-trace-compiler
-                         ↓
-              本地 workflow library
-                         ↓
-               yoso-browser-library
-                         ↓
-                 已有 Chrome session
+用户演示 → Recorder → 复制 Clipboard Envelope（主路径）
+                    └→ 下载 <workflow>.yoso（备用）
+                              │
+                              ▼
+                    yoso-trace-compiler
+                              │
+                              ▼
+                    本地 workflow library
+                              │
+                              ▼
+                    yoso-browser-library
+                              │
+                              ▼
+                      已有 Chrome session
 ```
 
 ## 新用户安装与数据目录
@@ -59,10 +64,11 @@ cp -R skills/yoso-browser-library "$CODEX_SKILLS_DIR/"
 | 数据 | 默认位置 | 何时产生 |
 |------|----------|----------|
 | Skill 本体 | `${CODEX_HOME:-$HOME/.codex}/skills/yoso-*/` | 用户安装两个 Skill 时 |
+| 剪贴板轨迹 | 系统剪贴板；粘贴后进入受信任的 Agent 对话 | 点击“复制给 Agent”时 |
 | 原始 `.yoso` | 用户在浏览器中选择的下载目录 | Recorder 导出时 |
 | 编译后的 workflow library | `${YOSO_HOME:-$HOME/.yoso}/browser-library/v1/<traceId>/` | Trace Compiler 首次成功导入时 |
 
-因此，新用户刚安装两个 Skill 后，workflow library 为空是正常状态。用户需要先从插件下载 `.yoso`，再在对话中让 Agent 使用 `$yoso-trace-compiler` 导入。Compiler 不会移动或删除原始下载文件；导入成功后，多个网站和多条轨迹统一进入同一个 Browser Library，而不是各自生成一个站点 Skill。
+因此，新用户刚安装两个 Skill 后，workflow library 为空是正常状态。主路径是在插件中点击“复制给 Agent”，把完整内容粘贴到 Agent 对话；其中已包含 `$yoso-trace-compiler` 路由指令。剪贴板受限、内容较大或需要归档时，再下载 `.yoso` 并让 Agent 导入。Compiler 不会移动或删除原始下载文件；导入成功后，多个网站和多条轨迹统一进入同一个 Browser Library，而不是各自生成一个站点 Skill。
 
 ```text
 ${YOSO_HOME:-$HOME/.yoso}/browser-library/v1/
@@ -80,12 +86,20 @@ ${YOSO_HOME:-$HOME/.yoso}/browser-library/v1/
 |------|------|
 | **工具集（ToolSet）** | 按站点或业务场景组织多棵操作树，一套工具集可以包含多条 workflow 轨迹。 |
 | **录制与结构标注** | 捕获点击、输入、导航、等待、悬停、内容提取、文件上传等操作，并保留树、分支、参数和循环语义。 |
-| **Trace Package** | 无需 branch `code-ready` 或 LLM；只要当前 ToolSet 有节点，即可在分支页下载 versioned `.yoso`。 |
+| **Trace 导出** | 无需 branch `code-ready` 或 LLM；只要当前 ToolSet 有节点，即可在分支页复制 versioned Clipboard Envelope，或下载 `.yoso` 备用。 |
 | **Agent 动态执行** | workflow 提供意图、顺序和页面线索；Agent 运行时 snapshot 页面并动态选择元素，不盲目依赖旧 selector。 |
 | **真实浏览器复用** | Browser Library Skill 只 attach 已有 Chrome，可复用该浏览器中的登录态、Cookie 与站点上下文；结束后只 detach。 |
 | **Legacy exports** | 原有 ToolSet JSON、固定脚本 Skill、MCP Server 和登录会话导出继续保留，便于已有用户迁移。 |
 
-## `.yoso` Trace Package
+## Trace 导出格式
+
+“复制给 Agent”生成的文本包含一行路由指令、唯一 sentinel `YOSO_TRACE_CLIPBOARD_V1`，以及一个 JSON Envelope：
+
+```json
+{"format":"yoso-trace-clipboard","formatVersion":1,"manifest":{},"trace":{}}
+```
+
+Envelope 中的 `manifest` 与 `trace` 和同次 `.yoso` 导出的内容语义一致。Compiler 只在容器解析处区分粘贴文本与 ZIP，之后两者共享相同的版本、schema、脱敏计数、图结构和原子导入校验。
 
 `.yoso` 是 ZIP 容器，v1 归档只允许两个根级条目：
 
@@ -96,7 +110,7 @@ trace.json
 
 Recorder 使用字段 allowlist 和 `safe-default` 策略。默认不导出输入值、凭据、文件路径、DOM attributes、截图、提取文本、Cookie、LocalStorage、SessionStorage 或 LLM 配置；URL 的 query 和 fragment 会被移除。`manifest.json` 记录 schema/version、节点统计和可重算的脱敏事件计数。
 
-> `.yoso` 仍然是敏感文件，不是匿名数据。selectors、页面结构、站点路径和操作意图可能暴露内部系统信息；请只在受信任环境中保存、传输和编译。
+> Clipboard Envelope 与 `.yoso` 都不是匿名数据。selectors、页面结构、站点路径和操作意图可能暴露内部系统信息；请只粘贴给受信任的 Agent，并只在受信任环境中保存、传输和编译。
 
 ---
 
@@ -185,8 +199,8 @@ npm run compile
 
 1. 在扩展中选择或新建 ToolSet，在目标站点开始录制并按业务流程完成演示。
 2. 按需标注等待、悬停、提取、上传、分支、参数或循环语义；Trace 导出不要求先完成旧脚本的 `code-ready` 门槛。
-3. 打开**分支**页，点击**下载 Trace Package (.yoso)**。扩展在本地完成固定规则脱敏，不访问网络，也不调用 LLM。
-4. 让 Agent 使用 `$yoso-trace-compiler` 校验并导入 `.yoso`，得到本地 workflow library。
+3. 打开**分支**页，点击**复制给 Agent**。扩展在本地完成固定规则脱敏，不访问网络，也不调用 LLM；将复制结果完整粘贴到受信任的 Agent 对话。
+4. Agent 使用 `$yoso-trace-compiler` 校验并导入 Clipboard Envelope，得到本地 workflow library。剪贴板不可用或需要保留原始文件时，点击**下载 .yoso 备用文件**并让 Agent 导入该文件。
 5. 让 Agent 使用 `$yoso-browser-library` 选择 workflow、补齐已脱敏的运行时输入，并 attach 用户已有的 Chrome session。
 6. Agent 每一步先观察页面、解析当前 locator，再执行操作；所有 CLI stdout/stderr 先由受控 wrapper 重定向到本轮私有易失目录，只返回脱敏后的最小状态；成功或失败后均只执行 detach 并清理该目录，不关闭外部浏览器。
 
@@ -200,7 +214,7 @@ Browser Library 不会在“找到一个大概匹配的轨迹”后立即操作�
 4. **连接边界**：只能 attach 用户已有 Chrome；任一静态校验失败都必须发生在 attach 或第一次页面变更之前。
 5. **逐步动态校验**：每一步操作前重新检查当前 URL/origin，并从 snapshot 中解析唯一且可见的目标；目标缺失、歧义或页面上下文不符时停止，不猜测点击。
 
-Compiler 也遵循对应的导入 gate：`.yoso` 先在临时目录完成 ZIP、schema、引用、安全与资源限制校验，通过后才原子写入正式 library；失败时不留下半成品。
+Compiler 也遵循对应的导入 gate：Clipboard Envelope 先验证 sentinel、单一 JSON 边界和版本，`.yoso` 先验证 ZIP 容器；之后两者在临时目录共享 schema、引用、安全与资源限制校验，通过后才原子写入正式 library，失败时不留下半成品。
 
 两个 Skill 可用官方 validator 检查：
 
