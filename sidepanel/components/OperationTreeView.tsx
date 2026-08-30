@@ -807,10 +807,11 @@ function Minimap({ layout, setActiveBranchMap }: {
             <path
               key={`mm-${conn.fromId}-${conn.toId}`}
               d={d}
-              stroke={conn.isMainPath ? '#3b82f6' : '#cbd5e1'}
               strokeWidth="1.5"
               fill="none"
-              className="transition-all duration-500"
+              className={`transition-all duration-500 ${
+                conn.isMainPath ? 'stroke-blue-500' : 'stroke-slate-300'
+              }`}
             />
           )
         })}
@@ -820,12 +821,12 @@ function Minimap({ layout, setActiveBranchMap }: {
           const cy = ty(n.y + CARD_H / 2)
           const role = n.node.metadata.nodeRole
           
-          let fill = '#94a3b8'
+          let fillClass = 'fill-slate-400'
           if (n.state === 'main') {
-            if (role === 'branch_point') fill = '#f97316'
-            else if (role === 'enum_param') fill = '#22c55e'
-            else if (role === 'loop_target') fill = '#a855f7'
-            else fill = '#3b82f6'
+            if (role === 'branch_point') fillClass = 'fill-orange-500'
+            else if (role === 'enum_param') fillClass = 'fill-green-500'
+            else if (role === 'loop_target') fillClass = 'fill-purple-500'
+            else fillClass = 'fill-blue-500'
           }
           
           return (
@@ -834,8 +835,9 @@ function Minimap({ layout, setActiveBranchMap }: {
               cx={cx}
               cy={cy}
               r={n.state === 'main' ? 3 : 2}
-              fill={fill}
-              className={`transition-all duration-500 ${n.state === 'mini' ? 'cursor-pointer hover:fill-blue-400' : ''}`}
+              className={`transition-all duration-500 ${fillClass} ${
+                n.state === 'mini' ? 'cursor-pointer hover:fill-blue-400' : ''
+              }`}
               onClick={() => {
                 if (n.state === 'mini') {
                   let current = n.node
@@ -1083,11 +1085,12 @@ export default function OperationTreeView() {
                 key={`${conn.fromId}-${conn.toId}`}
                 d={d}
                 fill="none"
-                stroke={conn.isMainPath ? '#3b82f6' : '#cbd5e1'}
                 strokeWidth={conn.isMainPath ? 3 : 2}
                 strokeLinecap="round"
                 strokeDasharray={conn.isMainPath ? 'none' : '4 4'}
-                className="transition-all duration-500"
+                className={`transition-all duration-500 ${
+                  conn.isMainPath ? 'stroke-blue-500' : 'stroke-slate-300'
+                }`}
               />
             )
           })}
@@ -1216,7 +1219,7 @@ export default function OperationTreeView() {
                   ) : (
                     'border-gray-200 hover:border-gray-400 hover:shadow'
                   )
-                } ${item.state === 'main' && isUnconfirmed ? 'shadow-[0_0_8px_rgba(59,130,246,0.6)] animate-pulse' : 'shadow-sm'}`}
+                } ${item.state === 'main' && isUnconfirmed ? 'shadow-[0_0_8px] shadow-blue-500/60 animate-pulse' : 'shadow-sm'}`}
                 onClick={() => {
                   if (item.state === 'mini') {
                     // Find the ancestor fork where this branch diverged
