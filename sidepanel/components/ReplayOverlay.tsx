@@ -131,14 +131,14 @@ export default function ReplayOverlay() {
         {isRunning ? (
           <button
             onClick={abortReplay}
-            className="w-full py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
+            className="min-h-11 w-full rounded bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1"
           >
             {t('replay.abort')}
           </button>
         ) : (
           <button
             onClick={reset}
-            className="w-full py-1.5 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors"
+            className="min-h-11 w-full rounded bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1"
           >
             {t('replay.close')}
           </button>

@@ -284,7 +284,7 @@ export default function RecordingControls() {
             )}
             <button
               onClick={handleStart}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
+              className="flex min-h-11 items-center gap-1.5 rounded-md bg-red-500 px-3 py-2 text-xs font-medium text-white transition-colors hover:bg-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-1"
             >
               <span className="w-2 h-2 rounded-full bg-white" />
               {t('recording.start')}

@@ -374,7 +374,7 @@ export default function RecordingTab() {
   return (
     <div className="relative flex h-full min-h-0 flex-col">
       <RecordingControls />
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className="min-h-0 flex-1 overflow-hidden">
         <OperationTreeView />
       </div>
       <TracePackageCard />
