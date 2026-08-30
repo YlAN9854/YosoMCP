@@ -13,7 +13,8 @@
     "zip:firefox": "wxt zip -b firefox",
     "test": "node -e \"console.log('No automated tests in this repository.');\"",
     "compile": "tsc --noEmit",
-    "postinstall": "wxt prepare"
+    "postinstall": "wxt prepare",
+    "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
     "fflate": "^0.8.2",
@@ -30,6 +31,9 @@
     "@types/uuid": "^10.0.0",
     "@wxt-dev/auto-icons": "^1.1.1",
     "@wxt-dev/module-react": "^1.1.5",
+    "react-doctor": "^0.9.12",
+    "react-grab": "^0.2.0",
+    "react-scan": "^0.5.7",
     "tailwindcss": "^4.2.1",
     "typescript": "^5.9.3",
     "wxt": "^0.20.18"
