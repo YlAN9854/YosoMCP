@@ -1,5 +1,16 @@
 # 真实浏览器连接与执行协议
 
+## CLI 前置条件
+
+本协议只允许使用官方 npm package `@playwright/cli` 提供的 `playwright-cli`，不使用同名的 deprecated 占位 package `playwright-cli`。用户必须在调用本 Skill 前完成安装：
+
+```bash
+npm install -g @playwright/cli@latest
+playwright-cli --version
+```
+
+Agent 只能执行无副作用的 `playwright-cli --version` 预检，不能代替用户安装或升级依赖。预检失败时必须在读取 workflow 和 attach 前停止，给出上述安装命令。当前版本不得改用 `@playwright/mcp`、其他 MCP server、Playwright library API 或临时 `npx` 下载作为 fallback。
+
 ## 选择连接方式
 
 所有命令使用独立 session，并必须由后文的 transcript-safe wrapper 执行；以下连接示例只表示参数，不允许把 CLI 原始 stdout/stderr 直接返回 Agent：

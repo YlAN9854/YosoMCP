@@ -57,6 +57,19 @@ cp -R skills/yoso-browser-library "$CODEX_SKILLS_DIR/"
 
 升级时应替换对应的完整 Skill 目录，避免把新目录嵌套到旧目录中。安装后重新开始一个 Agent 会话，使 Skill metadata 能在新会话中参与匹配。
 
+### 安装 Playwright CLI
+
+`yoso-trace-compiler` 不操作浏览器，因此不依赖 Playwright。`yoso-browser-library` 当前版本则**必须**使用官方 `@playwright/cli`，请在运行 Agent 的同一环境中预先安装并确认命令可用：
+
+```bash
+npm install -g @playwright/cli@latest
+playwright-cli --version
+```
+
+这里需要安装的是 npm package `@playwright/cli`，其 executable 名为 `playwright-cli`；不要安装 deprecated 的同名占位 package `playwright-cli`。例如 Agent 运行在 WSL 时，应在 WSL 中安装，而不是只在 Windows 中安装。
+
+Playwright MCP 技术上也能通过 CDP 或 Extension 连接已有 Chrome，但**不属于当前版本的 Browser Library 执行契约**。Skill 检测不到 `playwright-cli` 时会停止并提示安装，不会自动安装依赖、临时通过 `npx` 下载，也不会静默回退到 MCP。后续版本如支持 MCP，应另行定义 tool mapping、snapshot 脱敏、secret 传递和 finally detach 契约。
+
 ### 轨迹与 Library 存在哪里
 
 这三类文件彼此分离：

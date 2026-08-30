@@ -7,19 +7,26 @@ description: "当用户明确或隐含要求在真实浏览器执行网站操作
 
 把已导入 workflow 当作行动指导，不把录制 selector 当成不可变脚本。每一步都以真实浏览器的当前 snapshot 为准。
 
+## 必备运行时
+
+当前版本只支持官方 `@playwright/cli` 提供的 `playwright-cli`。开始处理 workflow 前必须确认该命令已安装且可执行；若不可用，停止并提示用户预先安装，不得由 Agent 自动安装，也不得改用 Playwright MCP 或其他浏览器执行通道。
+
+Playwright MCP 技术上也能连接 CDP/Extension，但不属于当前 Skill 契约。除非未来版本显式增加对应执行协议，否则不能把 MCP 当作 CLI 的 fallback。
+
 ## 运行流程
 
-1. 定位 `${YOSO_HOME:-$HOME/.yoso}/browser-library/v1`，按 [Workflow Library v1](references/workflow-library-v1.md) 验证 catalog、workflow 和引用。
-2. 根据用户的站点、任务、目标和当前 URL 筛选 workflow。必须得到唯一匹配；没有匹配时说明 library 缺口，多个匹配时要求用户选择，不猜测。
-3. 在连接浏览器前收齐全部 `requiredInputs`：
+1. 执行 `playwright-cli --version` 检查必备运行时。命令不存在或退出非零时，立即停止并提示安装官方 `@playwright/cli`；不要读取 library，不要发浏览器命令。
+2. 定位 `${YOSO_HOME:-$HOME/.yoso}/browser-library/v1`，按 [Workflow Library v1](references/workflow-library-v1.md) 验证 catalog、workflow 和引用。
+3. 根据用户的站点、任务、目标和当前 URL 筛选 workflow。必须得到唯一匹配；没有匹配时说明 library 缺口，多个匹配时要求用户选择，不猜测。
+4. 在连接浏览器前收齐全部 `requiredInputs`：
    - 缺任何 input 立即停止，不发浏览器命令。
    - secret input 只保存在当前调用内存，不回显、不写日志、不写 evidence。
    - 不允许把 placeholder 或 `[REDACTED]` 当成输入值。
-4. 按 [真实浏览器连接](references/browser-connection.md) 建立私有易失运行目录，再选择用户明确批准的连接方式。`playwright-cli` 会自动落盘 snapshot；有 secret input 时若无法使用 memory-backed 目录，必须在 attach 前停止。禁止静默 fallback 到 `open`、persistent profile 或新 BrowserContext。
-5. 从易失目录通过 transcript-safe wrapper attach，立即获取 snapshot，确认目标 tab、origin 和可见页面状态。禁止直接调用会把 stdout/stderr 返回 Agent 的 `playwright-cli`；wrapper 必须先把原始输出重定向到易失目录，只将脱敏后的最小 locator/状态返回 transcript。
-6. 按 workflow `steps` 顺序串行执行。每步先从 snapshot 解析当前 locator，再执行一个动作，再验证 URL、可见性或目标状态。页面注入 secret 后，后续 snapshot 同样只能在易失目录内生成并经脱敏后输出。
-7. extract 只返回运行时页面结果，不返回录制时 snapshot。
-8. 成功或失败都在 finally 阶段执行 `playwright-cli -s=yoso detach`，再清除本轮易失目录及 daemon/cache。只断开 CLI，不关闭用户浏览器。
+5. 按 [真实浏览器连接](references/browser-connection.md) 建立私有易失运行目录，再选择用户明确批准的连接方式。`playwright-cli` 会自动落盘 snapshot；有 secret input 时若无法使用 memory-backed 目录，必须在 attach 前停止。禁止静默 fallback 到 `open`、persistent profile 或新 BrowserContext。
+6. 从易失目录通过 transcript-safe wrapper attach，立即获取 snapshot，确认目标 tab、origin 和可见页面状态。禁止直接调用会把 stdout/stderr 返回 Agent 的 `playwright-cli`；wrapper 必须先把原始输出重定向到易失目录，只将脱敏后的最小 locator/状态返回 transcript。
+7. 按 workflow `steps` 顺序串行执行。每步先从 snapshot 解析当前 locator，再执行一个动作，再验证 URL、可见性或目标状态。页面注入 secret 后，后续 snapshot 同样只能在易失目录内生成并经脱敏后输出。
+8. extract 只返回运行时页面结果，不返回录制时 snapshot。
+9. 成功或失败都在 finally 阶段执行 `playwright-cli -s=yoso detach`，再清除本轮易失目录及 daemon/cache。只断开 CLI，不关闭用户浏览器。
 
 ## 动态定位
 
