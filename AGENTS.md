@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Project identity
-Chrome extension (Manifest V3) built with [WXT](https://wxt.dev/), React 19, TypeScript, Tailwind CSS v4, and Zustand. Records browser interactions into structured action trees and exports versioned `.yoso` Trace Packages for the Trace Compiler and Browser Library Skills, while retaining legacy MCP server and fixed-script Skill exports.
+Chrome extension (Manifest V3) built with [WXT](https://wxt.dev/), React 19, TypeScript, Tailwind CSS v4, and Zustand. Records browser interactions into structured action trees, supports Replay-based continuation and branch recording, infers parameter/loop roles, and exports versioned Clipboard/`.yoso` Trace Packages for the Trace Compiler and Browser Library Skills.
 
 ## Commands
 

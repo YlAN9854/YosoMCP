@@ -86,10 +86,9 @@ ${YOSO_HOME:-$HOME/.yoso}/browser-library/v1/
 |------|------|
 | **工具集（ToolSet）** | 按站点或业务场景组织多棵操作树，一套工具集可以包含多条 workflow 轨迹。 |
 | **录制与结构标注** | 捕获点击、输入、导航、等待、悬停、内容提取、文件上传等操作，并保留树、分支、参数和循环语义。 |
-| **Trace 导出** | 无需 branch `code-ready` 或 LLM；只要当前 ToolSet 有节点，即可在分支页复制 versioned Clipboard Envelope，或下载 `.yoso` 备用。 |
+| **Trace 导出** | 只要当前 ToolSet 有节点，即可在录制单页直接复制 versioned Clipboard Envelope，或下载 `.yoso` 备用。 |
 | **Agent 动态执行** | workflow 提供意图、顺序和页面线索；Agent 运行时 snapshot 页面并动态选择元素，不盲目依赖旧 selector。 |
 | **真实浏览器复用** | Browser Library Skill 只 attach 已有 Chrome，可复用该浏览器中的登录态、Cookie 与站点上下文；结束后只 detach。 |
-| **Legacy exports** | 原有 ToolSet JSON、固定脚本 Skill、MCP Server 和登录会话导出继续保留，便于已有用户迁移。 |
 
 ## Trace 导出格式
 
@@ -108,7 +107,7 @@ manifest.json
 trace.json
 ```
 
-Recorder 使用字段 allowlist 和 `safe-default` 策略。默认不导出输入值、凭据、文件路径、DOM attributes、截图、提取文本、Cookie、LocalStorage、SessionStorage 或 LLM 配置；URL 的 query 和 fragment 会被移除。`manifest.json` 记录 schema/version、节点统计和可重算的脱敏事件计数。
+Recorder 使用字段 allowlist 和 `safe-default` 策略。默认不导出输入值、凭据、文件路径、DOM attributes、截图、提取文本、Cookie、LocalStorage、SessionStorage，或旧 ToolSet 中遗留的 LLM 配置；URL 的 query 和 fragment 会被移除。`manifest.json` 记录 schema/version、节点统计和可重算的脱敏事件计数。
 
 > Clipboard Envelope 与 `.yoso` 都不是匿名数据。selectors、页面结构、站点路径和操作意图可能暴露内部系统信息；请只粘贴给受信任的 Agent，并只在受信任环境中保存、传输和编译。
 
@@ -125,18 +124,7 @@ Recorder 使用字段 allowlist 和 `safe-default` 策略。默认不导出输�
 | **哔哩哔哩** | _（待补充：演示视频 URL）_ |
 | **YouTube** | _（待补充：演示视频 URL）_ |
 
-可选：在同一行或下方加一句视频内容简介（例如：安装、录制、分支、导出 MCP 全流程）。
-
-### 常见网站的 MCP Server 示例（独立仓库）
-
-使用 YOSO 对常见站点录制并导出的 MCP Server 代码，可单独维护在**本仓库之外**的 Git 托管仓库中，便于版本管理与分发。
-
-| 项目 | 链接与说明 |
-|------|------------|
-| **示例仓库** | _（待补充：`https://github.com/...` 或 Gitee 等）_ |
-| **文档 / 列表** | _（可选：各站点工具说明、导入方式、免责声明等，可为仓库内 README 链接）_ |
-
-> **提示**：第三方站点自动化可能受服务条款约束；示例仓库建议注明「仅供学习 / 需自行承担合规责任」等。
+可选：在同一行或下方加一句视频内容简介（例如：安装、录制分叉、Replay 续录、复制并导入 Trace 全流程）。
 
 ---
 
@@ -198,8 +186,8 @@ npm run compile
 ## 主使用流程
 
 1. 在扩展中选择或新建 ToolSet，在目标站点开始录制并按业务流程完成演示。
-2. 按需标注等待、悬停、提取、上传、分支、参数或循环语义；Trace 导出不要求先完成旧脚本的 `code-ready` 门槛。
-3. 打开**分支**页，点击**复制给 Agent**。扩展在本地完成固定规则脱敏，不访问网络，也不调用 LLM；将复制结果完整粘贴到受信任的 Agent 对话。
+2. 按需标注等待、悬停、提取、上传、分支、参数或循环语义；可从任意节点 Replay 后继续录制或创建左右分支。
+3. 在同一录制页面点击**保存轨迹**，再点击**复制给 Agent**。扩展在本地完成固定规则脱敏，不访问网络；将复制结果完整粘贴到受信任的 Agent 对话。
 4. Agent 使用 `$yoso-trace-compiler` 校验并导入 Clipboard Envelope，得到本地 workflow library。剪贴板不可用或需要保留原始文件时，点击**下载 .yoso 备用文件**并让 Agent 导入该文件。
 5. 让 Agent 使用 `$yoso-browser-library` 选择 workflow、补齐已脱敏的运行时输入，并 attach 用户已有的 Chrome session。
 6. Agent 每一步先观察页面、解析当前 locator，再执行操作；所有 CLI stdout/stderr 先由受控 wrapper 重定向到本轮私有易失目录，只返回脱敏后的最小状态；成功或失败后均只执行 detach 并清理该目录，不关闭外部浏览器。
@@ -253,22 +241,15 @@ run_private detach detach
 
 `playwright-cli` 可能把页面 snapshot 自动写入当前目录，也可能把 post-action snapshot 返回 stdout。Browser Library Skill 因此禁止从仓库或 evidence 目录直接运行，也禁止把裸 CLI 调用作为 Agent tool call；所有输出必须先在同一 shell invocation 内重定向并脱敏。有 secret runtime input 时必须使用 memory-backed 私有目录，并在 finally 中 detach 后清除。无法提供这种安全执行通道时应在 attach 前停止。
 
-## Legacy exports 兼容
+## Recorder 精简边界
 
-产品转型不会删除已有导出入口：
-
-- ToolSet 仍可导入/导出 `<name>.yoso.json`。
-- `code-ready` 分支仍可生成固定 TypeScript Skill 包与 MCP Server 包。
-- 登录会话仍可显式导出 Playwright `storageState` JSON；该文件含 Cookie 与 LocalStorage，比 `.yoso` 更敏感。
-- 旧 Skill/MCP 的 readiness、注册、代码生成和 blocked 规则保持不变。
-
-新的 Trace Compiler/Browser Library 与旧 `skill.runtime.json`/固定脚本是不同契约，不应混用。迁移期可以并行使用两条路径。
+扩展只保留轨迹创作与交付主链：ToolSet 选择/显式保存、录制树、树内分叉、从节点 Replay 后续录、参数/循环推断，以及 Clipboard/`.yoso` Trace 导出。旧 ToolSet JSON 导入导出、Branch 产物管理、插件内 LLM 设置与分析、固定脚本 Skill/MCP 生成和登录会话导出均已移除。仓库中的 `yoso-trace-compiler` 与 `yoso-browser-library` 是当前正式的 Skill 契约，不属于被删除的插件内旧生成器。
 
 ---
 
 ## 权限说明
 
-扩展会申请包括但不限于：`sidePanel`、`tabs`、`scripting`、`storage`、`cookies`、`webNavigation`、`downloads` 以及广泛 **host_permissions**（用于在任意站点注入内容脚本并录制/重放）。`.yoso` 导出不会读取 Cookie 或 Web Storage；`cookies` 权限仍由 legacy 登录会话导出使用。开源审阅时请以 `wxt.config.ts` 中的 `manifest` 为准。
+扩展申请 `activeTab`、`sidePanel`、`storage`、`tabs`、`scripting`、`webNavigation` 和 `<all_urls>` host permission，用于在用户访问的页面注入内容脚本并录制/重放。它不再申请 `cookies`、`downloads`，也不申请 OpenAI/Anthropic API host；`.yoso` 下载由页面 Blob 链接完成。开源审阅时请以 `wxt.config.ts` 中的 `manifest` 为准。
 
 ---
 
@@ -277,7 +258,7 @@ run_private detach detach
 ```
 entrypoints/          # WXT 入口（background、content、sidepanel）
 content/              # 内容脚本：录制、重放、选择器与分支候选采集等
-background/           # 后台：消息路由、重放控制、结构分析、MCP/Skill 生成
+background/           # 后台：消息路由、录制/重放控制、结构分析与 Trace 生成
 sidepanel/            # 侧栏 UI（React）
 types/                # 共享类型定义
 skills/               # Trace Compiler 与 Browser Library 两个 repo-native Skill
@@ -291,11 +272,8 @@ docs/architecture/    # 产品架构、数据契约与安全边界
 **法律声明**
 > 本项目仅供学习交流使用，请勿用于任何非法或违反网站服务条款的目的。因滥用本项目导致的任何法律责任，由使用者自行承担。
 
-**导出被拦截（blocked）**  
-Legacy Skill/MCP 在路径未确认或校验未通过时仍会拒绝生成。`.yoso` Trace Package 不依赖这些门槛；若 Trace 导出失败，请检查操作树是否为空、节点 ID/父子关系是否合法。
-
-**LLM 相关**  
-工具注册命名等 legacy 功能需要你在**设置**中配置 API Key 与模型；Recorder 的 `.yoso` 导出、两个 repo-native Skill 及真实浏览器执行均不依赖插件内 LLM 配置。
+**Trace 无法复制或下载**
+先确认已选择 ToolSet、录制树至少包含一个节点，并点击“保存轨迹”。若仍失败，请检查节点 ID、父子关系和 tree root 是否合法；Recorder 不依赖插件内 LLM 或旧 `code-ready` 门槛。
 
 ---
 

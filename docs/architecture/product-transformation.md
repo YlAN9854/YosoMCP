@@ -4,11 +4,11 @@
 
 YOSO 从“录制后生成固定 Playwright 脚本，再包装为 MCP Server”转向“录制事实、编译语义轨迹、由 Agent 在真实浏览器中动态执行”的三层产品：
 
-1. **YOSO Recorder extension**：浏览器插件只负责录制、归一化、默认脱敏和导出，不在新的 Trace 主路径中调用 LLM。
+1. **YOSO Recorder extension**：浏览器插件只负责录制、归一化、默认脱敏和导出，不访问模型服务。
 2. **`yoso-trace-compiler` Skill**：验证 `.yoso` Trace Package 或粘贴的 Clipboard Envelope，把 root-to-leaf 轨迹编译成可检索、可参数化的 workflow library。
 3. **`yoso-browser-library` Skill**：根据用户意图检索 workflow，以记录的轨迹为指导，先理解当前页面，再通过 Playwright CLI/CDP/Extension 驱动用户已经打开的真实浏览器。
 
-本次转型保留原有 ToolSet JSON、MCP、可执行 Skill 和 session 导出。新能力是并行增加的主路径，不是一次破坏性迁移。
+Recorder 已完成精简：保留录制分叉树、从任意节点 Replay 后继续/分支录制、参数与循环推断，以及 Trace 复制/下载；删除插件内旧 ToolSet JSON 导入导出、Branch 产物、LLM、固定脚本 Skill/MCP 和 session 导出。
 
 ## 2. 为什么转型
 
@@ -54,7 +54,7 @@ Recorder 是事实采集器和安全导出边界：
 - 记录 navigate、click、fill、upload、wait、extract、frame 等动作和树关系。
 - 从当前 ToolSet snapshot 生成 Trace，不改写现有 IndexedDB schema。
 - 只使用显式 allowlist 创建新对象，不把 ToolSet 原对象直接序列化后再删除字段。
-- 新 Trace 导出不访问网络、不调用 LLM、不依赖 branch 分析或 `code-ready` 状态。
+- Trace 导出不访问网络，不依赖旧 Branch 产物分析或 `code-ready` 状态。
 - 当前 ToolSet 至少有一个 operation node 时即可导出。
 - Side Panel 只负责触发 background 生成同一份 manifest/trace；主入口复制 versioned Clipboard Envelope，次入口把两个文本条目压成 `.yoso` ZIP 下载备用。
 
@@ -128,7 +128,7 @@ Trace 只保留 Recorder 事实：
 - selector、tag、索引和 parent selector 等动态定位线索。
 - root redaction events，以及每个 action 的 `redactedFields`。
 
-Trace 明确不包含：branches、tools、analysis cache、generated code、session、cookies、localStorage、LLM settings、录制时截图或提取快照。
+Trace 明确不包含：旧 branches/tools/analysis cache、generated code、session、cookies、localStorage、旧 LLM settings、录制时截图或提取快照。
 
 ### 5.4 图不变量
 
@@ -151,7 +151,7 @@ Trace 明确不包含：branches、tools、analysis cache、generated code、ses
 - `action.attributes` 与 candidate attributes
 - `action.extractedText`
 - `action.extractedScreenshot`
-- `metadata.llmSettings`
+- 旧 ToolSet 对象中可能遗留的 `metadata.llmSettings`
 - session、cookies、localStorage
 
 URL 会移除 query 和 fragment。保留的文本还会掩码常见 password、token、secret、API key、Authorization 和 Bearer 赋值形态。
@@ -215,13 +215,14 @@ Skill 的 metadata/description 负责稳定触发：当用户显式或隐式要�
 
 | 能力 | 转型后状态 | 说明 |
 |---|---|---|
-| Clipboard Envelope | 新主路径 | 无 LLM、默认脱敏，复制并粘贴给 Compiler Skill |
+| Clipboard Envelope | 主路径 | 默认脱敏，复制并粘贴给 Compiler Skill |
 | `.yoso` Trace Package | 保留备用 | 与 Envelope 同源，供剪贴板不可用或归档场景 |
-| `.yoso.json` ToolSet | 保留 | 现有导入/导出与 IndexedDB 不变 |
-| `*-skill.zip` | 保留 | 旧的固定脚本式可执行 Skill |
-| `*-mcp-server.zip` | 保留 | 旧 MCP Server 生成与门禁不变 |
-| `*-session.json` | 保留 | 仍只导出 code-ready 分支所需 storage state |
-| LLM 设置与命名 | 保留 | 旧分析/命名能力继续存在；Trace 路径不使用 |
+| ToolSet IndexedDB | 保留 | schema v1 不迁移、不清空；显式“保存轨迹”写入当前 snapshot |
+| 录制分叉与 Replay 续录 | 保留 | 树内选择节点/连接，Replay 成功后继续或创建左右分支 |
+| 参数与循环推断 | 保留 | node role、enum/dynamic/loop metadata 继续进入 Trace |
+| `.yoso.json` 导入导出 | 移除 | 不再维护第二套外部 ToolSet 文件契约 |
+| 固定脚本 Skill/MCP 生成 | 移除 | 由两个 repo-native Skill 取代插件内生成器 |
+| session 导出与 LLM 设置 | 移除 | Recorder 不再读取 Cookie/Web Storage，也不访问模型 API |
 
 ## 11. 数据与信任边界
 
@@ -233,7 +234,7 @@ Skill 的 metadata/description 负责稳定触发：当用户显式或隐式要�
 
 ## 12. 非目标
 
-本阶段不建设扩展内 Trace 导入、云同步、账号体系、marketplace、远程 browser broker、LLM 轨迹总结、Chrome Web Store 发布或跨设备 session 搬运，也不移除任何旧导出能力。
+本阶段不建设扩展内 Trace 导入、云同步、账号体系、marketplace、远程 browser broker、轨迹总结、Chrome Web Store 发布或跨设备 session 搬运，也不为已删除的旧导出协议提供兼容入口。
 
 ## 13. 演进原则
 
@@ -241,4 +242,4 @@ Skill 的 metadata/description 负责稳定触发：当用户显式或隐式要�
 2. 脱敏策略只能版本化收紧；放宽必须成为显式的新模式并重新评估产品授权，本阶段不提供。
 3. Runtime 以页面观测为准，workflow 提供目标和顺序，不提供不可质疑的 selector。
 4. 每个版本的 reader 都严格验证自己理解的字段与不变量。
-5. 旧导出通过独立兼容测试维护，不让新 Trace 代码侵入其生成链路。
+5. Recorder 只维护录制、Replay、推断和 Trace 主链；已删除的旧生成链不再进入 message/type/permission 边界。
