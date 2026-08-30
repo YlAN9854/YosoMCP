@@ -993,7 +993,8 @@ export default function OperationTreeView() {
     store.setRecordingMode('continue')
     store.setActiveRecordingParentId(leafNodeId)
     store.setRecordingContinuationRootId(leafNodeId)
-    await useReplayStore.getState().startReplay(leafNodeId, store.nodes)
+    const result = await useReplayStore.getState().startReplay(leafNodeId, store.nodes)
+    if (result === 'rejected') store.resetTreeRecording()
   }, [])
 
   const handleBranchRecording = useCallback(async (parentNodeId: string, side: 'left' | 'right') => {
@@ -1001,7 +1002,8 @@ export default function OperationTreeView() {
     store.setRecordingMode('branch')
     store.setActiveRecordingParentId(parentNodeId)
     store.setPendingBranchSide(side)
-    await useReplayStore.getState().startReplay(parentNodeId, store.nodes)
+    const result = await useReplayStore.getState().startReplay(parentNodeId, store.nodes)
+    if (result === 'rejected') store.resetTreeRecording()
   }, [])
 
   const handleContextMenu = (e: React.MouseEvent, node: OperationNode) => {

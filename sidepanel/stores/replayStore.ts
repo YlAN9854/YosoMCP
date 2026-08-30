@@ -4,6 +4,7 @@ import { MSG } from '@/types/message'
 import type { ReplayStepResult, ReplayCompleteResult } from '@/types/operationTree'
 
 export type ReplayStatus = 'idle' | 'replaying' | 'completed' | 'failed' | 'aborted'
+export type ReplayStartResult = 'started' | 'rejected'
 
 interface ReplayState {
   status: ReplayStatus
@@ -12,7 +13,10 @@ interface ReplayState {
   stepResults: ReplayStepResult[]
   replayingNodeId: string | null
 
-  startReplay: (leafNodeId: string, nodes: import('@/types/operationTree').OperationNode[]) => Promise<void>
+  startReplay: (
+    leafNodeId: string,
+    nodes: import('@/types/operationTree').OperationNode[]
+  ) => Promise<ReplayStartResult>
   abortReplay: () => Promise<void>
   handleStepResult: (result: ReplayStepResult) => void
   handleComplete: (result: ReplayCompleteResult) => void
@@ -38,11 +42,13 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
 
     try {
       await sendToBackground(MSG.REPLAY_START, { leafNodeId, nodes })
-    } catch (err) {
+      return 'started'
+    } catch {
       set({
         status: 'failed',
         replayingNodeId: null,
       })
+      return 'rejected'
     }
   },
 
