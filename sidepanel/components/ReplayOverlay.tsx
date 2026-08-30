@@ -1,5 +1,6 @@
 import type { ReplayStepResult } from '@/types/operationTree'
 import { useReplayStore } from '@/sidepanel/stores/replayStore'
+import { useRecorderStore } from '@/sidepanel/stores/recorderStore'
 import { useI18n } from '@/sidepanel/hooks/useI18n'
 
 function StepIcon({ result }: { result?: ReplayStepResult }) {
@@ -12,6 +13,7 @@ export default function ReplayOverlay() {
   const { t } = useI18n()
   const { status, currentStep, totalSteps, stepResults, abortReplay, reset } =
     useReplayStore()
+  const resetTreeRecording = useRecorderStore(state => state.resetTreeRecording)
 
   if (status === 'idle') return null
 
@@ -25,6 +27,11 @@ export default function ReplayOverlay() {
 
   const failedStep = stepResults.find(r => !r.success)
   const totalDuration = stepResults.reduce((sum, r) => sum + r.duration, 0)
+
+  const handleAbort = async () => {
+    await abortReplay()
+    resetTreeRecording()
+  }
 
   return (
     <div className="absolute inset-0 z-50 bg-white flex flex-col">
@@ -135,7 +142,7 @@ export default function ReplayOverlay() {
       <div className="px-4 py-3 border-t border-gray-200">
         {isRunning ? (
           <button
-            onClick={abortReplay}
+            onClick={handleAbort}
             className="min-h-11 w-full rounded bg-gray-100 px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-1"
           >
             {t('replay.abort')}

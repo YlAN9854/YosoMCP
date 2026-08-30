@@ -56,7 +56,10 @@ export const useReplayStore = create<ReplayState>((set, get) => ({
     try {
       await sendToBackground(MSG.REPLAY_ABORT)
     } catch {
-      // 忽略错误
+      set({
+        status: 'aborted',
+        replayingNodeId: null,
+      })
     }
   },
 
