@@ -23,13 +23,13 @@ Three WXT entrypoints in `entrypoints/` (auto-discovered by WXT):
 
 | Entry | Runs in | Purpose |
 |-------|---------|---------|
-| `background.ts` | Service worker | Message routing, storage (IndexedDB), recording/replay control, analysis, code generation |
+| `background.ts` | Service worker | Message routing, storage (IndexedDB), recording/replay control, structural analysis, Trace generation |
 | `content.ts` | Every page (`<all_urls>`, all frames) | Capture DOM events, replay actions, element pickers, selector inference |
-| `sidepanel/` | Side panel (React) | UI: recording controls, operation tree, branch panel, settings |
+| `sidepanel/` | Side panel (React) | Single-page UI: ToolSet selection, recording controls, operation tree, Replay, Trace delivery |
 
 **Supporting directories:**
 - `content/` — content script modules (recorder, replayer, selectors, pickers)
-- `background/` — background modules (analyzer/, generator/, storage/, controllers, services)
+- `background/` — background modules (structural analyzers, Trace generator, storage, recording/replay controllers)
 - `sidepanel/` — React UI (components/, hooks/, stores/, utils/)
 - `types/` — shared TypeScript types
 - `utils/` — shared helpers (currently just messaging wrappers)

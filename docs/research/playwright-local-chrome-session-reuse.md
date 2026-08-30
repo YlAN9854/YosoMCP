@@ -261,7 +261,9 @@ MCP `--user-data-dir` 或 CLI `open --persistent` 会启动一个 Playwright 管
 
 ## 对 YOSO 产品形态讨论的输入
 
-本调研只确认技术可行性，不在此直接决定最终产品形态。后续讨论可以围绕以下连接模型展开：
+> **历史方案，已不属于当前产品边界。** 本节只记录早期调研时讨论过的连接模型，不代表当前能力或产品承诺。当前插件只负责录制、Replay、参数/循环角色推断与 Trace Clipboard/`.yoso` 交付；不生成或导出固定 Skill/MCP。repo-native Trace Compiler 与 Browser Library Skills 作为独立工具保留。
+
+早期讨论曾围绕以下连接模型展开：
 
 1. **YOSO 继续只负责录制和生成**，导出的 MCP/Skill 由用户自行选择 Playwright 连接方式；
 2. **YOSO 导出带 Browser Binding 的 MCP**，运行时提供 `isolated`、`persistent`、`existing Chrome via CDP`、`existing Chrome via Extension` 等显式模式；
