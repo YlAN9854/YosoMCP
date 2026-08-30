@@ -45,7 +45,7 @@ YOSO 是一个紧凑、可信、偏工程化的浏览器操作面板：信息密
 
 基础单位为 4px。既有映射：`1=4px`、`1.5=6px`、`2=8px`、`3=12px`、`4=16px`、`8=32px`。
 
-- App shell：纵向 flex，顶部 TabBar 与 ToolSetSelector 固定，内容区拥有滚动。
+- App shell：单页纵向 flex；ToolSetSelector 与 RecordingControls 固定，OperationTreeView 是唯一主滚动区，Trace Package 固定在树下方。
 - 卡片：外边距 12px、内边距 8px、垂直间距 6–8px。
 - 交互 cluster：同级按钮 gap 8px；主按钮独占一行，次级按钮可与说明分离。
 - 主操作最小高度 44px（`min-h-11`），满足 pointer target。
@@ -56,9 +56,23 @@ YOSO 是一个紧凑、可信、偏工程化的浏览器操作面板：信息密
 
 ### App Shell
 
-- **Structure**：TabBar → ToolSetSelector → 当前 Tab 内容。
-- **Layout**：纵向 shell；内容区 `flex-1 overflow-hidden`，内部组件声明自己的 scroll owner。
-- **Accessibility**：所有操作通过原生 button；键盘顺序与视觉顺序一致。
+- **Structure**：ToolSetSelector → RecordingControls → OperationTreeView → Trace Package；ReplayOverlay 覆盖整个录制工作区。
+- **Layout**：纵向 shell；ToolSetSelector、RecordingControls 与 Trace Package 均 `shrink-0`，OperationTreeView 使用 `flex-1 min-h-0 overflow-auto`，是唯一主滚动区。页面本身不得产生第二条纵向滚动条。
+- **Capability boundary**：界面只呈现轨迹选择/保存、录制、树内分叉、从节点 Replay 后续录、参数角色确认，以及 Trace 复制/下载；不再呈现旧 Branch 产物、LLM 配置、MCP/固定 Skill 生成或 session 导出。
+- **Accessibility**：所有操作通过原生 button；键盘顺序严格跟随上述视觉顺序；Replay 状态变化由 live region 宣告。
+
+### Recording Workspace
+
+- **Recording controls**：idle 时显示起始 URL 和录制入口；recording/paused 时只显示当前阶段可执行动作，不为已删除能力保留空位。
+- **Operation tree**：继续录制与左右分支入口保留在对应节点/连接附近；节点角色确认仍在树内完成。树只滚动自己的画布，浮层和 context menu 不得扩大 App shell。
+- **Persistence**：ToolSet 使用显式“保存轨迹”；保存、复制、下载是三个不同动作，必须有不同文案和反馈，不能用“导出”统称。
+
+### Replay Overlay
+
+- **States**：running、failed、aborted；成功并进入续录时自动关闭。
+- **Rollback**：failed 或 aborted 都必须退出 pending continuation/branch 状态，不得让树的 `+` 入口消失。
+- **Actions**：running 只提供“中止重放”；failed/aborted 提供“关闭”并返回原树上下文。
+- **Accessibility**：overlay 是工作区内的状态层，保留标题、进度、错误详情和可见 focus；不得依赖进度条颜色单独表达结果。
 
 ### Panel Card
 
@@ -83,6 +97,13 @@ YOSO 是一个紧凑、可信、偏工程化的浏览器操作面板：信息密
 - **Content**：说明发生了什么以及下一步；复制成功必须明确提示“粘贴到 Agent 对话”。
 - **Accessibility**：polite live region，避免重复播报同一状态。
 
+### Trace Delivery
+
+- **Placement**：始终位于 OperationTreeView 下方，与树同屏，不需要切换页面。
+- **Primary action**：“复制给 Agent”为 44px 主按钮；成功状态明确说明可粘贴到 Agent 对话。
+- **Secondary action**：保留 `.yoso` 下载作为文件型交付备选；风险说明与复制决策相邻。
+- **Availability**：没有当前轨迹或节点为空时 disabled，并保留原因明确的稳定状态区。
+
 ## 6. Motion & Interaction
 
 | Token | Duration | Easing | Usage |
@@ -90,7 +111,7 @@ YOSO 是一个紧凑、可信、偏工程化的浏览器操作面板：信息密
 | `motion-micro` | 150ms | `ease-out` | hover/focus 颜色反馈 |
 | `motion-state` | 200ms | `ease-in-out` | copy/loading/success 的 opacity 状态交换 |
 
-复制交互参照 beui.dev `button` + `action-swap`：idle → loading → success/error，标签在原位改变，不移动布局。当前项目没有 Motion 依赖，因此用 React state 与现有 CSS transition 实现，不新增动画库。`prefers-reduced-motion: reduce` 下状态仍即时可见，且没有必要的 transform 动画需要执行。
+复制交互参照 beui.dev `button` + `action-swap`：idle → loading → success/error，标签在原位改变，不移动布局。当前项目没有 Motion 依赖，因此用 React state 与现有 CSS transition 实现，不新增动画库。Replay 只对运行指示器和进度状态使用现有轻量动画；`prefers-reduced-motion: reduce` 下状态仍即时可见。
 
 ## 7. Depth & Surface
 
@@ -115,4 +136,4 @@ YOSO 是一个紧凑、可信、偏工程化的浏览器操作面板：信息密
 
 ### Accepted Debt
 
-本次改动不新增已接受的设计或无障碍债务。既有界面的全面 token 整理、旧图标替换和字号提升不属于本功能范围，也不在本文件中视为已接受债务。
+本次改动不新增已接受的设计或无障碍债务。树节点画布仍沿用现有 emoji action markers 与紧凑字号；它们是录制树既有语言，本轮不做全面 token/图标替换，但所有新主操作和状态文案必须满足本文件的 12px、focus 与 target-size 约束。
