@@ -6,6 +6,10 @@ export const TRACE_PACKAGE_FORMAT = 'yoso-trace-package' as const
 export const TRACE_PACKAGE_FORMAT_VERSION = 1 as const
 export const TRACE_SCHEMA_VERSION = 1 as const
 export const TRACE_REDACTION_POLICY_VERSION = 1 as const
+export const TRACE_CLIPBOARD_FORMAT = 'yoso-trace-clipboard' as const
+export const TRACE_CLIPBOARD_FORMAT_VERSION = 1 as const
+export const TRACE_CLIPBOARD_SENTINEL = 'YOSO_TRACE_CLIPBOARD_V1' as const
+export const TRACE_CLIPBOARD_INSTRUCTION = '请使用 $yoso-trace-compiler 验证并导入以下 YOSO 剪贴板轨迹。' as const
 
 export type TraceRedactionCode =
   | 'action-value'
@@ -147,6 +151,13 @@ export type TraceDocumentV1 = {
   readonly redactions: readonly TraceRedactionEventV1[]
 }
 
+export type TraceClipboardEnvelopeV1 = {
+  readonly format: typeof TRACE_CLIPBOARD_FORMAT
+  readonly formatVersion: typeof TRACE_CLIPBOARD_FORMAT_VERSION
+  readonly manifest: TracePackageManifestV1
+  readonly trace: TraceDocumentV1
+}
+
 export type TracePackageFile = {
   readonly filename: 'manifest.json' | 'trace.json'
   readonly content: string
@@ -155,6 +166,7 @@ export type TracePackageFile = {
 export type TracePackageOutput = {
   readonly filename: string
   readonly files: readonly TracePackageFile[]
+  readonly clipboardText: string
   readonly summary: {
     readonly treeCount: number
     readonly nodeCount: number

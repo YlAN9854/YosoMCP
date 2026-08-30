@@ -1,10 +1,15 @@
 import type { ToolSet } from '../../types/toolset.ts'
 import {
+  TRACE_CLIPBOARD_FORMAT,
+  TRACE_CLIPBOARD_FORMAT_VERSION,
+  TRACE_CLIPBOARD_INSTRUCTION,
+  TRACE_CLIPBOARD_SENTINEL,
   TRACE_PACKAGE_FORMAT,
   TRACE_PACKAGE_FORMAT_VERSION,
   TRACE_REDACTION_POLICY_VERSION,
   TRACE_SCHEMA_VERSION,
   type TracePackageGenerationContext,
+  type TraceClipboardEnvelopeV1,
   type TracePackageManifestV1,
   type TracePackageOutput,
   type TraceRedactionCode,
@@ -50,12 +55,19 @@ export function generateTracePackage(
       byCode,
     },
   }
+  const clipboardEnvelope: TraceClipboardEnvelopeV1 = {
+    format: TRACE_CLIPBOARD_FORMAT,
+    formatVersion: TRACE_CLIPBOARD_FORMAT_VERSION,
+    manifest,
+    trace,
+  }
   return {
     filename: safeFilename(toolSet.name),
     files: [
       { filename: 'manifest.json', content: serialize(manifest) },
       { filename: 'trace.json', content: serialize(trace) },
     ],
+    clipboardText: `${TRACE_CLIPBOARD_INSTRUCTION}\n${TRACE_CLIPBOARD_SENTINEL}\n${JSON.stringify(clipboardEnvelope)}\n`,
     summary: {
       treeCount: trace.trees.length,
       nodeCount: trace.nodes.length,
