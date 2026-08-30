@@ -14,6 +14,9 @@ stats-*.json
 .wxt
 web-ext.config.ts
 
+# Agent 本地运行态（计划、QA evidence、临时 fixture）
+.omo/
+
 # Editor directories and files
 .vscode/*
 .trae/*
