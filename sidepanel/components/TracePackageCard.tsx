@@ -1,25 +1,12 @@
-import type { OperationTreeInfo } from '@/types/operationTree'
-import type { ToolSet } from '@/types/toolset'
 import { useState } from 'react'
 import { useI18n } from '@/sidepanel/hooks/useI18n'
-import { useBranchStore } from '@/sidepanel/stores/branchStore'
 import { useRecorderStore } from '@/sidepanel/stores/recorderStore'
 import { useToolsetStore } from '@/sidepanel/stores/toolsetStore'
 import { useTracePackageStore } from '@/sidepanel/stores/tracePackageStore'
 import { copyToClipboard, downloadAsZip } from '@/sidepanel/utils/export'
+import { buildToolSetSnapshot } from '@/sidepanel/utils/toolsetSnapshot'
 
 type ExportAction = 'copy' | 'download'
-
-function currentTrees(toolSet: ToolSet, nodes: ToolSet['operationNodes']): OperationTreeInfo[] {
-  const existingByRoot = new Map(toolSet.operationTrees.map(tree => [tree.rootNodeId, tree]))
-  return nodes
-    .filter(node => node.parentId === null)
-    .map(node => existingByRoot.get(node.id) ?? {
-      id: `tree-${node.id}`,
-      rootNodeId: node.id,
-      label: node.action.url ?? node.action.type,
-    })
-}
 
 export default function TracePackageCard() {
   const { t } = useI18n()
@@ -28,7 +15,6 @@ export default function TracePackageCard() {
   const [actionError, setActionError] = useState<string | null>(null)
   const nodes = useRecorderStore(state => state.nodes)
   const targetUrl = useRecorderStore(state => state.targetUrl)
-  const branches = useBranchStore(state => state.branches)
   const currentToolSet = useToolsetStore(state => {
     const id = state.currentToolSetId
     return id ? state.toolSets.find(toolSet => toolSet.id === id) ?? null : null
@@ -44,14 +30,7 @@ export default function TracePackageCard() {
 
   const generateOutput = () => {
     if (!currentToolSet || nodes.length === 0) return Promise.resolve(null)
-    const snapshot: ToolSet = {
-      ...currentToolSet,
-      operationTrees: currentTrees(currentToolSet, nodes),
-      operationNodes: nodes,
-      branches,
-      targetUrl: targetUrl ?? currentToolSet.targetUrl,
-      updatedAt: Date.now(),
-    }
+    const snapshot = buildToolSetSnapshot(currentToolSet, nodes, targetUrl)
     return exportTracePackage(snapshot)
   }
 
