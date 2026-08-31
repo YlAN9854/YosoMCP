@@ -74,7 +74,7 @@ export function startContentExtractPicker(
       }
     </style>
     <div class="toolbar">
-      <span class="toolbar-text">YOSO 内容提取：先点击页面元素，再选择“提取文本”或“获取元素截图”</span>
+      <span class="toolbar-text">YOSO Flow 内容提取：先点击页面元素，<span style="white-space: nowrap">再选择</span>“提取文本”或“获取元素截图”</span>
       <span class="hint">ESC 取消</span>
     </div>
     <div id="actions" class="actions">

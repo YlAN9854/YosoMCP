@@ -55,7 +55,7 @@ export function startUploadPicker(
       .hint { color: #9ca3af; }
     </style>
     <div class="toolbar">
-      <span class="toolbar-text">YOSO 文件上传：请点击页面上的文件上传控件（input[type=file]）</span>
+      <span class="toolbar-text">YOSO Flow 文件上传：请点击页面上的<span style="white-space: nowrap">文件上传控件</span>（input[type=file]）</span>
       <span class="hint">ESC 取消</span>
     </div>
   `

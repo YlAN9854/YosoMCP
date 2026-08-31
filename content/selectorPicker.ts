@@ -96,7 +96,7 @@ export function startSelectorPicker(
     </style>
     <div class="toolbar">
       <span class="toolbar-text">
-        YOSO 选择器拾取 — 点击页面上的同类元素 | 已选 <span class="toolbar-count" id="pick-count">0</span> 个
+        YOSO Flow 选择器拾取 — 点击页面上的同类元素 | 已选 <span class="toolbar-count" id="pick-count">0</span> 个
       </span>
       <button class="btn btn-confirm" id="btn-done" disabled>完成选择</button>
       <button class="btn btn-cancel" id="btn-cancel">取消</button>

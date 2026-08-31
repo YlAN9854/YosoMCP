@@ -259,15 +259,15 @@ MCP `--user-data-dir` 或 CLI `open --persistent` 会启动一个 Playwright 管
 - 对不完全可信的 Agent，应建议使用专用 Chrome profile；
 - Extension token、CDP endpoint 和 browser-level 控制权限都应被视为敏感凭据或高权限能力。
 
-## 对 YOSO 产品形态讨论的输入
+## 对 YOSO Flow 产品形态讨论的输入
 
 > **历史方案，已不属于当前产品边界。** 本节只记录早期调研时讨论过的连接模型，不代表当前能力或产品承诺。当前插件只负责录制、Replay、参数/循环角色推断与 Trace Clipboard/`.yoso` 交付；不生成或导出固定 Skill/MCP。repo-native Trace Compiler 与 Browser Library Skills 作为独立工具保留。
 
 早期讨论曾围绕以下连接模型展开：
 
-1. **YOSO 继续只负责录制和生成**，导出的 MCP/Skill 由用户自行选择 Playwright 连接方式；
-2. **YOSO 导出带 Browser Binding 的 MCP**，运行时提供 `isolated`、`persistent`、`existing Chrome via CDP`、`existing Chrome via Extension` 等显式模式；
-3. **YOSO 自身充当浏览器桥接层**，利用现有扩展身份、tab 权限和录制上下文，把受控 tab 暴露给生成的 MCP；
+1. **YOSO Flow 继续只负责录制和生成**，导出的 MCP/Skill 由用户自行选择 Playwright 连接方式；
+2. **YOSO Flow 导出带 Browser Binding 的 MCP**，运行时提供 `isolated`、`persistent`、`existing Chrome via CDP`、`existing Chrome via Extension` 等显式模式；
+3. **YOSO Flow 自身充当浏览器桥接层**，利用现有扩展身份、tab 权限和录制上下文，把受控 tab 暴露给生成的 MCP；
 4. **混合模式**，默认使用隔离浏览器保证可重复性，在必须复用 SSO/2FA/人工上下文时由用户切换到现有 Chrome。
 
-这些方案的主要权衡不是“技术上能否复用 cookie”，而是可重复性、用户授权体验、权限隔离、Agent 信任边界、导出产物的独立性，以及 YOSO 是否要承担持续运行的 browser broker 职责。
+这些方案的主要权衡不是“技术上能否复用 cookie”，而是可重复性、用户授权体验、权限隔离、Agent 信任边界、导出产物的独立性，以及 YOSO Flow 是否要承担持续运行的 browser broker 职责。

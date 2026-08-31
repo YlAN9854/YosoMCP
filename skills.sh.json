@@ -3,7 +3,7 @@
   "notGrouped": "bottom",
   "groupings": [
     {
-      "title": "YOSO Workflow",
+      "title": "YOSO Flow",
       "description": "Import recorded YOSO traces and run them in an existing Chrome session.",
       "skills": [
         "yoso-trace-compiler",

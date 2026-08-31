@@ -3,7 +3,7 @@
 export function createRecordingIndicator(): HTMLElement {
   const host = document.createElement('div')
   host.id = 'yoso-recording-indicator'
-  const shadow = host.attachShadow({ mode: 'closed' })
+  const shadow = host.attachShadow({ mode: 'open' })
 
   shadow.innerHTML = `
     <style>
@@ -43,7 +43,7 @@ export function createRecordingIndicator(): HTMLElement {
     </style>
     <div class="indicator" id="indicator-el">
       <span class="dot"></span>
-      <span id="indicator-text">YOSO 录制中</span>
+      <span id="indicator-text">YOSO Flow 录制中</span>
     </div>
   `
 
@@ -60,7 +60,7 @@ export function updateIndicator(host: HTMLElement, paused: boolean): void {
     el.className = paused ? 'indicator paused' : 'indicator'
   }
   if (text) {
-    text.textContent = paused ? 'YOSO 已暂停' : 'YOSO 录制中'
+    text.textContent = paused ? 'YOSO Flow 已暂停' : 'YOSO Flow 录制中'
   }
 }
 

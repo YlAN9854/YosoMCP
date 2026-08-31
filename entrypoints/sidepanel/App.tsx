@@ -13,7 +13,7 @@ export default function App() {
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-50 text-gray-900">
       <ToolSetSelector />
-      <main className="min-h-0 flex-1 overflow-hidden" aria-label="YOSO Recorder">
+      <main className="min-h-0 flex-1 overflow-hidden" aria-label="YOSO Flow Recorder">
         <RecordingTab />
       </main>
     </div>

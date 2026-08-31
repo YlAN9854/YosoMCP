@@ -9,7 +9,7 @@ export default defineConfig({
     sizes: [128, 96, 48, 32, 24, 16],
   },
   manifest: {
-    name: 'YOSO - Browser Workflow Recorder',
+    name: 'YOSO Flow - Browser Workflow Recorder',
     description: 'Record, normalize, redact, and export browser workflows as versioned YOSO Trace Packages',
     permissions: [
       'activeTab',
@@ -26,7 +26,7 @@ export default defineConfig({
       default_path: 'sidepanel/index.html',
     },
     action: {
-      default_title: 'YOSO',
+      default_title: 'YOSO Flow',
     },
   },
   vite: () => ({

@@ -58,7 +58,7 @@ export function startHoverPicker(
       .hint { color: #9ca3af; }
     </style>
     <div class="toolbar">
-      <span class="toolbar-text">YOSO 悬停拾取：点击需要悬停才能展开面板的元素</span>
+      <span class="toolbar-text">YOSO Flow 悬停拾取：点击需要悬停才能<span style="white-space: nowrap">展开面板</span>的元素</span>
       <span class="hint">ESC 取消</span>
     </div>
   `

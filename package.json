@@ -1,6 +1,6 @@
 {
-  "name": "yoso-extension",
-  "description": "YOSO browser workflow recorder and versioned Trace Package exporter",
+  "name": "yoso-flow",
+  "description": "YOSO Flow browser workflow recorder and versioned Trace Package exporter",
   "private": false,
   "version": "0.1.0",
   "type": "module",

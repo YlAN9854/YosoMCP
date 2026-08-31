@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: "YOSO"
   version: "0.1.0"
-  repository: "https://github.com/YlAN9854/YosoMCP"
+  repository: "https://github.com/YlAN9854/yoso-flow"
   compatibility: "Requires filesystem read/write access and a runtime capable of safe ZIP and JSON processing. No browser dependency."
 ---
 

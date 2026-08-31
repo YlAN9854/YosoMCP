@@ -1,10 +1,12 @@
-# YOSO
+# YOSO Flow
 
-[![skills.sh](https://skills.sh/b/YlAN9854/YosoMCP)](https://skills.sh/YlAN9854/YosoMCP)
+[![skills.sh](https://skills.sh/b/YlAN9854/yoso-flow)](https://skills.sh/YlAN9854/yoso-flow)
 
 当前公开版本：`v0.1.0 Preview`
 
-**YOSO** 是一套以 Chrome 扩展为入口的 browser workflow 系统。用户在真实网页上演示操作，扩展将轨迹录制、规范化并默认脱敏；可一键复制 versioned Clipboard Envelope 给 Agent，也可下载 **YOSO Trace Package（`.yoso`）** 备用。Agent 再通过仓库内的两个 Skill 将轨迹编译为 workflow library，并在用户已经打开的 Chrome session 中动态理解页面、执行操作。
+**YOSO Flow** 是一套以 Chrome 扩展为入口的 browser workflow 系统。用户在真实网页上演示操作，扩展将轨迹录制、规范化并默认脱敏；可一键复制 versioned Clipboard Envelope 给 Agent，也可下载 **YOSO Trace Package（`.yoso`）** 备用。Agent 再通过仓库内的两个 Skill 将轨迹编译为 workflow library，并在用户已经打开的 Chrome session 中动态理解页面、执行操作。
+
+项目品牌已从 YosoMCP 更名为 YOSO Flow。`.yoso`、YOSO Trace Package、`YOSO_TRACE_CLIPBOARD_V1`、`yoso-trace-compiler` 和 `yoso-browser-library` 继续作为稳定的数据与 Skill 契约。
 
 新的主路径不再把 CSS selector 固化脚本当作唯一真相。轨迹描述保留操作意图、顺序和必要的页面线索，执行时由 Agent 重新观察当前页面并选择目标元素，从而更好地适应页面结构变化。完整设计见[产品转型架构](docs/architecture/product-transformation.md)。
 
@@ -14,7 +16,7 @@
 
 | 组件 | 职责 | 是否调用 LLM |
 |------|------|:---:|
-| **YOSO Recorder 扩展** | 录制操作树、做结构标注、按固定 allowlist 脱敏并复制 Clipboard Envelope；`.yoso` 作为下载备用。 | 否 |
+| **YOSO Flow Recorder 扩展** | 录制操作树、做结构标注、按固定 allowlist 脱敏并复制 Clipboard Envelope；`.yoso` 作为下载备用。 | 否 |
 | [`yoso-trace-compiler`](skills/yoso-trace-compiler/SKILL.md) | 把不可信 `.yoso` 或粘贴 Envelope 校验、编译并原子导入本地 workflow library；不操作浏览器。 | 否 |
 | [`yoso-browser-library`](skills/yoso-browser-library/SKILL.md) | 查找已导入 workflow，收集运行时输入，连接已有 Chrome，观察页面后逐步执行并 detach。 | 否 |
 
@@ -47,10 +49,10 @@
 
 ```shell
 # 先查看仓库中可安装的 Skill
-npx skills add YlAN9854/YosoMCP --list
+npx skills add YlAN9854/yoso-flow --list
 
 # 全局安装到 Codex 与 OpenCode；--copy 兼容不便使用 symlink 的 Windows 环境
-npx skills add YlAN9854/YosoMCP \
+npx skills add YlAN9854/yoso-flow \
   --skill yoso-trace-compiler \
   --skill yoso-browser-library \
   --agent codex \
@@ -176,7 +178,7 @@ npm run zip
 
 **分发 zip 与本地调试目录**
 
-- **`npm run zip`** 会先执行生产构建，再在 `.output/` 下生成**单个压缩包**，文件名形如 `yoso-extension-<版本号>-chrome.zip`（版本号与 `package.json` 的 `version` 一致）。该 zip 适合提交 Chrome 网上应用店、发 Release 或网盘分发。
+- **`npm run zip`** 会先执行生产构建，再在 `.output/` 下生成**单个压缩包**，文件名形如 `yoso-flow-<版本号>-chrome.zip`（版本号与 `package.json` 的 `version` 一致）。该 zip 适合提交 Chrome 网上应用店、发 Release 或网盘分发。
 - **本地开发与调试**时，请在 Chrome 中选择**未打包目录**（例如 `.output/chrome-mv3`），不要使用「加载已解压」去选 zip 文件；若拿到的是 zip，需先解压，再对解压后的文件夹执行「加载已解压的扩展程序」。
 - Firefox 对应产物可使用 `npm run zip:firefox` 生成。
 
@@ -193,7 +195,7 @@ npm run compile
 1. 执行 `npm run build`（开发阶段也可用 `npm run dev` 生成输出目录）。
 2. 打开 Chrome：**扩展程序** → **管理扩展程序** → 开启**开发者模式**。
 3. 点击**加载已解压的扩展程序**，选择 WXT 构建产物目录（例如 `.output/chrome-mv3`）。
-4. 点击工具栏中的 YOSO 图标或使用 Chrome **侧边栏**打开 YOSO 面板（扩展申请 `sidePanel` 权限）。
+4. 点击工具栏中的 YOSO Flow 图标或使用 Chrome **侧边栏**打开 YOSO Flow 面板（扩展申请 `sidePanel` 权限）。
 
 ---
 
@@ -300,4 +302,4 @@ docs/architecture/    # 产品架构、数据契约与安全边界
 
 ## 致谢
 
-感谢使用 YOSO。若本项目对你的研究或产品有帮助，可考虑在论文或文档中引用本仓库链接。
+感谢使用 YOSO Flow。若本项目对你的研究或产品有帮助，可考虑在论文或文档中引用本仓库链接。

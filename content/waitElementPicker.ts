@@ -164,7 +164,7 @@ export function startWaitElementPicker(
     </style>
     <div class="toolbar">
       <span class="toolbar-text">
-        ⏳ YOSO 等待拾取：<strong>先点选等待条件</strong>（元素 / URL / 固定等待），
+        ⏳ YOSO Flow 等待拾取：<strong style="white-space: nowrap">先点选等待条件</strong>（元素 / URL / <span style="white-space: nowrap">固定等待</span>），
         <span class="hint">再选择「等待说明」</span>
       </span>
       ${urlBtn}

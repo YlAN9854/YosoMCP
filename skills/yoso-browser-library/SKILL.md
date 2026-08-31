@@ -5,7 +5,7 @@ license: MIT
 metadata:
   author: "YOSO"
   version: "0.1.0"
-  repository: "https://github.com/YlAN9854/YosoMCP"
+  repository: "https://github.com/YlAN9854/yoso-flow"
   compatibility: "Requires shell access, Node.js 18+, official @playwright/cli, filesystem read/write access, and a user-approved Chrome CDP or Playwright Extension connection."
 ---
 

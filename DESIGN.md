@@ -1,8 +1,8 @@
-# YOSO Side Panel Design System
+# YOSO Flow Side Panel Design System
 
 ## 1. Atmosphere & Identity
 
-YOSO 是一个紧凑、可信、偏工程化的浏览器操作面板：信息密度高，但主任务始终清楚。白色和浅灰构成工作区，蓝色标识全局操作，Trace Package 使用 violet 作为独立但一致的能力色。标志性体验是“录制事实 → 明确反馈 → 可交付产物”的短路径，状态变化必须立即可见且不打断用户当前页面。
+YOSO Flow 是一个紧凑、可信、偏工程化的浏览器操作面板：信息密度高，但主任务始终清楚。白色和浅灰构成工作区，蓝色标识全局操作，Trace Package 使用 violet 作为独立但一致的能力色。标志性体验是“录制事实 → 明确反馈 → 可交付产物”的短路径，状态变化必须立即可见且不打断用户当前页面。
 
 ## 2. Color
 
@@ -33,7 +33,7 @@ YOSO 是一个紧凑、可信、偏工程化的浏览器操作面板：信息密
 
 | Level | Tailwind | Size | Weight / line-height | Usage |
 |---|---|---:|---|---|
-| App heading | `text-sm font-bold` | 14px | 700 / normal | YOSO 标识 |
+| App heading | `text-sm font-bold` | 14px | 700 / normal | YOSO Flow 标识 |
 | Section / action | `text-xs font-medium` | 12px | 500 / 1.5 | 按钮、卡片标题、正文 |
 | Supporting | `text-xs leading-relaxed` | 12px | 400 / 1.625 | 安全提示、状态说明 |
 | Compact metadata | `text-[10px]` | 10px | 500 / 1.4 | badge、非关键统计 |

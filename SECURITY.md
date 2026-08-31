@@ -19,7 +19,7 @@
 
 ## 敏感边界
 
-YOSO 扩展拥有 `<all_urls>`、`scripting`、`tabs` 等浏览器权限，以录制和 Replay 用户明确发起的操作。Clipboard Envelope 与 `.yoso` 会删除输入值、凭据、文件路径、DOM attributes、截图、提取文本、Cookie 和 Web Storage，但它们并非匿名数据：URL path、selector、页面结构和操作意图仍可能暴露敏感信息。
+YOSO Flow 扩展拥有 `<all_urls>`、`scripting`、`tabs` 等浏览器权限，以录制和 Replay 用户明确发起的操作。Clipboard Envelope 与 `.yoso` 会删除输入值、凭据、文件路径、DOM attributes、截图、提取文本、Cookie 和 Web Storage，但它们并非匿名数据：URL path、selector、页面结构和操作意图仍可能暴露敏感信息。
 
 使用或提交安全报告时：
 

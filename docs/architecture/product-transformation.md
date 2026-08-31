@@ -1,10 +1,10 @@
-# YOSO 产品转型架构
+# YOSO Flow 产品转型架构
 
 ## 1. 决策摘要
 
-YOSO 从“录制后生成固定 Playwright 脚本，再包装为 MCP Server”转向“录制事实、编译语义轨迹、由 Agent 在真实浏览器中动态执行”的三层产品：
+YOSO Flow 从“录制后生成固定 Playwright 脚本，再包装为 MCP Server”转向“录制事实、编译语义轨迹、由 Agent 在真实浏览器中动态执行”的三层产品：
 
-1. **YOSO Recorder extension**：浏览器插件只负责录制、归一化、默认脱敏和导出，不访问模型服务。
+1. **YOSO Flow Recorder extension**：浏览器插件只负责录制、归一化、默认脱敏和导出，不访问模型服务。
 2. **`yoso-trace-compiler` Skill**：验证 `.yoso` Trace Package 或粘贴的 Clipboard Envelope，把 root-to-leaf 轨迹编译成可检索、可参数化的 workflow library。
 3. **`yoso-browser-library` Skill**：根据用户意图检索 workflow，以记录的轨迹为指导，先理解当前页面，再通过 Playwright CLI/CDP/Extension 驱动用户已经打开的真实浏览器。
 
@@ -22,7 +22,7 @@ Recorder 已完成精简：保留录制分叉树、从任意节点 Replay 后继
 用户演示
   │
   ▼
-YOSO Recorder extension
+YOSO Flow Recorder extension
   录制 → 归一化 → allowlist → 默认脱敏
   │
   ▼
