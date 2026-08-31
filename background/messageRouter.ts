@@ -15,6 +15,8 @@ import { sendToContentScript, broadcastToSidePanel } from '@/utils/messaging'
 /** Background 自广播给侧栏的 EVENT，不应按「侧栏请求」走 handleSidePanelMessage */
 const SIDE_PANEL_EVENT_TYPES = new Set<string>(Object.values(EVENT) as string[])
 
+const CONTENT_SCRIPT_MESSAGE_TYPES = new Set<string>(Object.values(CS_MSG) as string[])
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
@@ -38,7 +40,7 @@ export function setupMessageRouter() {
       const { type, data } = message
 
       // 来自 Content Script 的消息
-      if (sender.tab) {
+      if (sender.tab && CONTENT_SCRIPT_MESSAGE_TYPES.has(type)) {
         if (type === CS_MSG.CAPTURE_VISIBLE_TAB) {
           handleContentScriptRequest(type, data, sender)
             .then(sendResponse)
