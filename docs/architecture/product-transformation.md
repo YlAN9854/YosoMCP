@@ -91,7 +91,7 @@ Skill 不导出 cookies/localStorage，不绕过 Chrome 的远程调试授权，
 主路径的 Clipboard Envelope v1 是：
 
 ```text
-请使用 $yoso-trace-compiler 验证并导入以下 YOSO 剪贴板轨迹。
+请调用名为 yoso-trace-compiler 的 Agent Skill，验证并导入以下 YOSO 剪贴板轨迹。
 YOSO_TRACE_CLIPBOARD_V1
 {"format":"yoso-trace-clipboard","formatVersion":1,"manifest":{...},"trace":{...}}
 ```

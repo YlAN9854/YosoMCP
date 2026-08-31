@@ -1,6 +1,12 @@
 ---
 name: yoso-browser-library
-description: "当用户明确或隐含要求在真实浏览器执行网站操作、复用已录制 YOSO workflow、已有登录态或当前 tabs 时使用。先查询统一 browser workflow library，再动态理解页面并执行；不编译 .yoso Trace。"
+description: "Run imported YOSO workflows in an existing Chrome session with dynamic page inspection and Playwright CLI. 当用户要求在真实浏览器复用已录制 workflow、登录态或当前 tabs 时使用；不编译 .yoso Trace。"
+license: MIT
+metadata:
+  author: "YOSO"
+  version: "0.1.0"
+  repository: "https://github.com/YlAN9854/YosoMCP"
+  compatibility: "Requires shell access, Node.js 18+, official @playwright/cli, filesystem read/write access, and a user-approved Chrome CDP or Playwright Extension connection."
 ---
 
 # YOSO Browser Library

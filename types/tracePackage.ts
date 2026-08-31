@@ -9,7 +9,7 @@ export const TRACE_REDACTION_POLICY_VERSION = 1 as const
 export const TRACE_CLIPBOARD_FORMAT = 'yoso-trace-clipboard' as const
 export const TRACE_CLIPBOARD_FORMAT_VERSION = 1 as const
 export const TRACE_CLIPBOARD_SENTINEL = 'YOSO_TRACE_CLIPBOARD_V1' as const
-export const TRACE_CLIPBOARD_INSTRUCTION = '请使用 $yoso-trace-compiler 验证并导入以下 YOSO 剪贴板轨迹。' as const
+export const TRACE_CLIPBOARD_INSTRUCTION = '请调用名为 yoso-trace-compiler 的 Agent Skill，验证并导入以下 YOSO 剪贴板轨迹。' as const
 
 export type TraceRedactionCode =
   | 'action-value'

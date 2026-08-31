@@ -1,5 +1,9 @@
 # YOSO
 
+[![skills.sh](https://skills.sh/b/YlAN9854/YosoMCP)](https://skills.sh/YlAN9854/YosoMCP)
+
+当前公开版本：`v0.1.0 Preview`
+
 **YOSO** 是一套以 Chrome 扩展为入口的 browser workflow 系统。用户在真实网页上演示操作，扩展将轨迹录制、规范化并默认脱敏；可一键复制 versioned Clipboard Envelope 给 Agent，也可下载 **YOSO Trace Package（`.yoso`）** 备用。Agent 再通过仓库内的两个 Skill 将轨迹编译为 workflow library，并在用户已经打开的 Chrome session 中动态理解页面、执行操作。
 
 新的主路径不再把 CSS selector 固化脚本当作唯一真相。轨迹描述保留操作意图、顺序和必要的页面线索，执行时由 Agent 重新观察当前页面并选择目标元素，从而更好地适应页面结构变化。完整设计见[产品转型架构](docs/architecture/product-transformation.md)。
@@ -39,23 +43,35 @@
 
 ### 安装两个 Skill
 
-将仓库中的两个完整目录复制到本地 Codex Skill 根目录。默认根目录为 `${CODEX_HOME:-$HOME/.codex}/skills/`：
+两个 Skill 遵循开放的 [Agent Skills specification](https://agentskills.io/specification)，推荐使用 `skills` CLI 安装到支持的 Agent：
 
-| 仓库目录 | 默认安装目标 |
-|----------|--------------|
-| `skills/yoso-trace-compiler/` | `${CODEX_HOME:-$HOME/.codex}/skills/yoso-trace-compiler/` |
-| `skills/yoso-browser-library/` | `${CODEX_HOME:-$HOME/.codex}/skills/yoso-browser-library/` |
+```shell
+# 先查看仓库中可安装的 Skill
+npx skills add YlAN9854/YosoMCP --list
 
-首次安装且目标目录尚不存在时，可在仓库根目录执行：
-
-```bash
-CODEX_SKILLS_DIR="${CODEX_HOME:-$HOME/.codex}/skills"
-mkdir -p "$CODEX_SKILLS_DIR"
-cp -R skills/yoso-trace-compiler "$CODEX_SKILLS_DIR/"
-cp -R skills/yoso-browser-library "$CODEX_SKILLS_DIR/"
+# 全局安装到 Codex 与 OpenCode；--copy 兼容不便使用 symlink 的 Windows 环境
+npx skills add YlAN9854/YosoMCP \
+  --skill yoso-trace-compiler \
+  --skill yoso-browser-library \
+  --agent codex \
+  --agent opencode \
+  --global \
+  --copy
 ```
 
-升级时应替换对应的完整 Skill 目录，避免把新目录嵌套到旧目录中。安装后重新开始一个 Agent 会话，使 Skill metadata 能在新会话中参与匹配。
+只需要其中一个 Skill 时，保留对应的 `--skill` 参数即可。安装后重新开始 Agent 会话，使 metadata 参与匹配。
+
+不使用 `skills` CLI 时，也可以把仓库中的完整 Skill 目录复制到宿主支持的目录。Codex 与 OpenCode 均支持 `~/.agents/skills/<name>/SKILL.md`；OpenCode 还支持 `~/.config/opencode/skills/<name>/SKILL.md`。不要只复制 `SKILL.md`，`references/` 与 `agents/` 也是 Skill package 的组成部分。
+
+### Agent 兼容性
+
+| Agent | Skill 发现/安装 | Trace Compiler | Browser Library |
+|------|------|------|------|
+| **Codex CLI** | 已验证 | 已验证 | 已完成真实 Chrome 执行验证 |
+| **OpenCode** | 已验证标准格式与安装目标 | 待端到端验证 | 待端到端验证 |
+| **其他 Agent Skills hosts** | 符合标准格式 | 需由宿主验证 filesystem 能力 | 需支持 shell、Playwright CLI 与安全临时目录 |
+
+`agents/openai.yaml` 只提供 Codex/ChatGPT UI metadata；其他 Agent 可以忽略它。核心 `SKILL.md`、`references/` 和 Trace 协议不依赖 Codex 专属调用语法。
 
 ### 安装 Playwright CLI
 
@@ -76,12 +92,12 @@ Playwright MCP 技术上也能通过 CDP 或 Extension 连接已有 Chrome，但
 
 | 数据 | 默认位置 | 何时产生 |
 |------|----------|----------|
-| Skill 本体 | `${CODEX_HOME:-$HOME/.codex}/skills/yoso-*/` | 用户安装两个 Skill 时 |
+| Skill 本体 | 由 Agent 或 `skills` CLI 决定；通用位置为 `~/.agents/skills/yoso-*/` | 用户安装两个 Skill 时 |
 | 剪贴板轨迹 | 系统剪贴板；粘贴后进入受信任的 Agent 对话 | 点击“复制给 Agent”时 |
 | 原始 `.yoso` | 用户在浏览器中选择的下载目录 | Recorder 导出时 |
 | 编译后的 workflow library | `${YOSO_HOME:-$HOME/.yoso}/browser-library/v1/<traceId>/` | Trace Compiler 首次成功导入时 |
 
-因此，新用户刚安装两个 Skill 后，workflow library 为空是正常状态。主路径是在插件中点击“复制给 Agent”，把完整内容粘贴到 Agent 对话；其中已包含 `$yoso-trace-compiler` 路由指令。剪贴板受限、内容较大或需要归档时，再下载 `.yoso` 并让 Agent 导入。Compiler 不会移动或删除原始下载文件；导入成功后，多个网站和多条轨迹统一进入同一个 Browser Library，而不是各自生成一个站点 Skill。
+因此，新用户刚安装两个 Skill 后，workflow library 为空是正常状态。主路径是在插件中点击“复制给 Agent”，把完整内容粘贴到 Agent 对话；其中已包含宿主无关的 `yoso-trace-compiler` Skill 路由提示。剪贴板受限、内容较大或需要归档时，再下载 `.yoso` 并让 Agent 导入。Compiler 不会移动或删除原始下载文件；导入成功后，多个网站和多条轨迹统一进入同一个 Browser Library，而不是各自生成一个站点 Skill。
 
 ```text
 ${YOSO_HOME:-$HOME/.yoso}/browser-library/v1/
@@ -123,21 +139,6 @@ trace.json
 Recorder 使用字段 allowlist 和 `safe-default` 策略。默认不导出输入值、凭据、文件路径、DOM attributes、截图、提取文本、Cookie、LocalStorage、SessionStorage，或旧 ToolSet 中遗留的 LLM 配置；URL 的 query 和 fragment 会被移除。`manifest.json` 记录 schema/version、节点统计和可重算的脱敏事件计数。
 
 > Clipboard Envelope 与 `.yoso` 都不是匿名数据。selectors、页面结构、站点路径和操作意图可能暴露内部系统信息；请只粘贴给受信任的 Agent，并只在受信任环境中保存、传输和编译。
-
----
-
-## 演示与示例仓库
-
-> 下列条目为**预留位置**：发布视频或独立仓库后，将占位文字替换为实际链接与一句说明即可。
-
-### 视频演示
-
-| 平台 | 链接与说明 |
-|------|------------|
-| **哔哩哔哩** | _（待补充：演示视频 URL）_ |
-| **YouTube** | _（待补充：演示视频 URL）_ |
-
-可选：在同一行或下方加一句视频内容简介（例如：安装、录制分叉、Replay 续录、复制并导入 Trace 全流程）。
 
 ---
 
@@ -201,8 +202,8 @@ npm run compile
 1. 在扩展中选择或新建 ToolSet，在目标站点开始录制并按业务流程完成演示。
 2. 按需标注等待、悬停、提取、上传、分支、参数或循环语义；可从任意节点 Replay 后继续录制或创建左右分支。
 3. 在同一录制页面点击**保存轨迹**，再点击**复制给 Agent**。扩展在本地完成固定规则脱敏，不访问网络；将复制结果完整粘贴到受信任的 Agent 对话。
-4. Agent 使用 `$yoso-trace-compiler` 校验并导入 Clipboard Envelope，得到本地 workflow library。剪贴板不可用或需要保留原始文件时，点击**下载 .yoso 备用文件**并让 Agent 导入该文件。
-5. 让 Agent 使用 `$yoso-browser-library` 选择 workflow、补齐已脱敏的运行时输入，并 attach 用户已有的 Chrome session。
+4. Agent 调用名为 `yoso-trace-compiler` 的 Skill 校验并导入 Clipboard Envelope，得到本地 workflow library。Codex 用户也可以显式输入 `$yoso-trace-compiler`。剪贴板不可用或需要保留原始文件时，点击**下载 .yoso 备用文件**并让 Agent 导入该文件。
+5. 让 Agent 调用名为 `yoso-browser-library` 的 Skill，选择 workflow、补齐已脱敏的运行时输入，并 attach 用户已有的 Chrome session。Codex 用户也可以显式输入 `$yoso-browser-library`。
 6. Agent 每一步先观察页面、解析当前 locator，再执行操作；所有 CLI stdout/stderr 先由受控 wrapper 重定向到本轮私有易失目录，只返回脱敏后的最小状态；成功或失败后均只执行 detach 并清理该目录，不关闭外部浏览器。
 
 ### 执行前 hard gate
@@ -217,16 +218,11 @@ Browser Library 不会在“找到一个大概匹配的轨迹”后立即操作�
 
 Compiler 也遵循对应的导入 gate：Clipboard Envelope 先验证 sentinel、单一 JSON 边界和版本，`.yoso` 先验证 ZIP 容器；之后两者在临时目录共享 schema、引用、安全与资源限制校验，通过后才原子写入正式 library，失败时不留下半成品。
 
-两个 Skill 可用官方 validator 检查：
+两个 Skill 可用 Agent Skills 标准 reference validator 检查：
 
 ```bash
-uv run --with pyyaml python \
-  "$HOME/.codex/skills/.system/skill-creator/scripts/quick_validate.py" \
-  skills/yoso-trace-compiler
-
-uv run --with pyyaml python \
-  "$HOME/.codex/skills/.system/skill-creator/scripts/quick_validate.py" \
-  skills/yoso-browser-library
+uvx --from skills-ref agentskills validate skills/yoso-trace-compiler
+uvx --from skills-ref agentskills validate skills/yoso-browser-library
 ```
 
 ## 连接已有 Chrome
@@ -292,7 +288,7 @@ docs/architecture/    # 产品架构、数据契约与安全边界
 
 ## 参与贡献
 
-欢迎 Issue 与 Pull Request。提交代码前建议本地执行 `npm run compile` 确保类型通过。
+欢迎 Issue 与 Pull Request。提交代码前建议本地执行 `npm run compile` 确保类型通过。安全问题请遵循[安全策略](SECURITY.md)，不要在公开 Issue 中披露未修复漏洞或敏感 Trace。
 
 ---
 

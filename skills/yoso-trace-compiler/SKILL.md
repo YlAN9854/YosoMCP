@@ -1,6 +1,12 @@
 ---
 name: yoso-trace-compiler
-description: "验证、编译或导入 .yoso Trace Package，或用户粘贴的 YOSO_TRACE_CLIPBOARD_V1 Clipboard Envelope 时使用。把录制轨迹转换为统一的 YOSO browser workflow library；只处理 Trace 和文件落盘，不执行任何浏览器操作。"
+description: "Validate, compile, and import YOSO .yoso Trace Packages or YOSO_TRACE_CLIPBOARD_V1 clipboard envelopes into a local browser workflow library. 当用户需要验证、编译或导入 YOSO 轨迹时使用；只处理 Trace 和文件落盘，不执行浏览器操作。"
+license: MIT
+metadata:
+  author: "YOSO"
+  version: "0.1.0"
+  repository: "https://github.com/YlAN9854/YosoMCP"
+  compatibility: "Requires filesystem read/write access and a runtime capable of safe ZIP and JSON processing. No browser dependency."
 ---
 
 # YOSO Trace Compiler

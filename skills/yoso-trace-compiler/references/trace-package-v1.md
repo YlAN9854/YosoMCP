@@ -15,7 +15,7 @@
 剪贴板导出是与 `.yoso` ZIP 并列的输入容器。完整文本的结构是：
 
 ```text
-请使用 $yoso-trace-compiler 验证并导入以下 YOSO 剪贴板轨迹。
+请调用名为 yoso-trace-compiler 的 Agent Skill，验证并导入以下 YOSO 剪贴板轨迹。
 YOSO_TRACE_CLIPBOARD_V1
 {"format":"yoso-trace-clipboard","formatVersion":1,"manifest":{...},"trace":{...}}
 ```
